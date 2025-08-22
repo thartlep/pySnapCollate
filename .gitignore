@@ -1,0 +1,11 @@
+*.pyc
+*.png
+*.mp4
+*.fits
+*.tar
+*.tar.gz
+*.sav
+*.pdf
+*.egg-info
+*.whl
+.DS_Store
