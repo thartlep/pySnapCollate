@@ -182,8 +182,48 @@ def start_daemon(args):
 
 ####################################################
 def stop_daemon(args):
-    # Logic to stop the daemon
-    print(f"Stopping daemon: {args.name}")
+    config_dir = os.path.expanduser(default_config_dir_name) # Daemon configuration directory
+    daemon_dir = os.path.join(config_dir, args.name)  # Directory for the specific daemon
+    config_path = os.path.join(daemon_dir, "config.json") # Configuration file for the specific daemon
+    script_path = os.path.join(daemon_dir, "run.csh") # Run script for the specific daemon
+    active_pattern = os.path.join(daemon_dir, "active_job.*") # Acive daemo tag
+
+    # Check if the configuration file exists
+    if not os.path.exists(config_path):
+        print(f"No configuration file found for daemon '{args.name}'.")
+        return
+
+    # Read the configuration data from the JSON file
+    try:
+        with open(config_path, 'r') as config_file:
+            config_data = json.load(config_file)
+    except Exception as e:
+        print(f"An error occurred while inspecting the daemon: {e}")
+
+    # Check if daemon is active
+    is_in_queue = False
+    for active_file in glob.glob(active_pattern):
+        # Active daemon file found, let's check if daemon is actually queued or running
+        command = ["qstat", active_file.rsplit('.', 1)[-1]]
+        try:
+            result = subprocess.run(command, check=True, capture_output=True, text=True)
+            is_in_queue = True
+        except subprocess.CalledProcessError as e:
+            # And let user know it wasn't even queued/running
+            print(f"Daemon '{args.name}' was already no longer queue/running.")
+            # Delete active daemon file
+            os.remove(active_file)
+        if is_in_queue:
+            # Delete queued or running job
+            command = ["qdel", active_file.rsplit('.', 1)[-1]]
+            try:
+                result = subprocess.run(command, check=True, capture_output=True, text=True)
+                print(f"Daemon '{args.name}' is being stopped.")
+                # Delete active daemon file
+                os.remove(active_file)
+            except subprocess.CalledProcessError as e:
+                # And let user know it wasn't even queued/running
+                print(f"Unable to stop daemon '{args.name}'. Try again")
 
 
 ####################################################
