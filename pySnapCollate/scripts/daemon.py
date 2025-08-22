@@ -64,6 +64,7 @@ def inspect_daemon(args):
     config_dir = os.path.expanduser(default_config_dir_name)
     daemon_dir = os.path.join(config_dir, args.name)  # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json")
+    active_pattern = os.path.join(daemon_dir, "active_job.*") # Acive daemo tag
 
     # Check if the configuration file exists
     if not os.path.exists(config_path):
@@ -81,6 +82,20 @@ def inspect_daemon(args):
             print(f"{key}: {value}")
     except Exception as e:
         print(f"An error occurred while inspecting the daemon: {e}")
+
+    # Check if queued/running
+    for active_file in glob.glob(active_pattern):
+        # Active daemon file found, let's check if daemon is actually queued or running
+        command = ["qstat", active_file.rsplit('.', 1)[-1]]
+        try:
+            result = subprocess.run(command, check=True, capture_output=True, text=True)
+            is_in_queue = True
+            print(f"Daemon '{args.name}' is queued/running.")
+        except subprocess.CalledProcessError as e:
+            # And let user know it wasn't even queued/running
+            print(f"Daemon '{args.name}' is no longer queued/running.")
+            # Delete active daemon file
+            os.remove(active_file)
 
 ####################################################
 def start_daemon(args):
@@ -109,12 +124,12 @@ def start_daemon(args):
         command = ["qstat", active_file.rsplit('.', 1)[-1]]
         try:
             result = subprocess.run(command, check=True, capture_output=True, text=True)
-            print(f"Daemon '{args.name}' is aready in queue/running.")
+            print(f"Daemon '{args.name}' is aready queued/running.")
             already_in_queue = True
         except subprocess.CalledProcessError as e:
             # Old active daemon file exists but is no longeer queued or running, let's delete it
             os.remove(active_file)
-    # Leave here if there is already an active daemon in the queue/running
+    # Leave here if there is already an active daemon is queued/running
     if already_in_queue:
         print(f"No need to start another one.")
         return
@@ -147,11 +162,11 @@ def start_daemon(args):
         f"#PBS -S /bin/csh\n",
         f"#PBS -W group_list={group}\n",
         f"#PBS -l {resources}\n",
-        f"#PBS -l walltime={lifetime}\n",
+        f"#PBS -l walltime={lifetime}:00:00\n",
         f"#PBS -r n\n",
         f"{environment}\n",
         f"cd {target}\n",
-        f"pySnapCollate -d {source} --varnames {varnames} --pvarnames {pvarnames} --verbose {verbose} --daemon_mode\n"
+        f"pySnapCollate -d {source} --varnames {varnames} --pvarnames {pvarnames} --verbose {verbose} --daemon_mode >> pySnapCollate.output \n"
     ]
 
     # Write run script to file
@@ -210,7 +225,7 @@ def stop_daemon(args):
             is_in_queue = True
         except subprocess.CalledProcessError as e:
             # And let user know it wasn't even queued/running
-            print(f"Daemon '{args.name}' was already no longer queue/running.")
+            print(f"Daemon '{args.name}' was already no longer queued/running.")
             # Delete active daemon file
             os.remove(active_file)
         if is_in_queue:
