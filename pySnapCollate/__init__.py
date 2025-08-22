@@ -1,5 +1,5 @@
 """
-A Python packge to automatically collect distributed simulation output (snapshots) from PENCIL.
+A Python package to automatically collect distributed simulation output (snapshots) from PENCIL and combine data into non-parallel data files for easy archiving and analysis.
 
 Written by Thomas Hartlep, Bay Area Environmental Research Institute, Moffet Field, CA
 """
