@@ -11,6 +11,9 @@
 
 import time, gc
 import numpy as np
+import sys
+import os
+import glob
 
 def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
 
@@ -46,24 +49,94 @@ def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
 
 varname_list = ['dx', 'dy', 'dz', 'np', 'rho', 'rhop', 't', 'ux', 'uy', 'uz', 'x', 'y', 'z']
 pvarname_list = ['ipars', 'ivpx', 'ivpy', 'ivpz', 'ixp', 'iyp', 'izp', 'vpx', 'vpy', 'vpz', 'xp', 'yp', 'zp']
+default_auto_wait = 10
 
 def main():
 
     # Parse command line argument
     import argparse
     parser = argparse.ArgumentParser(description = 'Export variables from pencil snapshot.')
-    parser.add_argument('-n', '--varnames', nargs = "*", help = 'variable name(s) to export, leave empty to get list of available names (default: '+' '.join(sorted(varname_list))+')', default = varname_list)
-    parser.add_argument('-f', '--varfiles', nargs = "*", help = 'name(s) of snapshot files (default: None)', default = [])
-    parser.add_argument('-pn', '--pvarnames', nargs = "*", help = 'particle variable name(s) to export, leave empty to get list of available names (default: '+' '.join(sorted(pvarname_list))+')', default = pvarname_list)
-    parser.add_argument('-pf', '--pvarfiles', nargs = "*", help = 'name(s) of particle snapshot files (default: None)', default = [])
-    parser.add_argument('-d',  '--directory', help = 'directory of input data (default: .)', default = '.')
-    parser.add_argument('-v', '--verbose', action = 'store_true', help = 'verbose output (default: False)', default = False)
+    parser.add_argument('--varnames', nargs = "*", help = 'Variable name(s) to export, leave empty to get list of available names (default: '+' '.join(sorted(varname_list))+')', default = varname_list)
+    parser.add_argument('--varfiles', nargs = "*", help = 'Name(s) of snapshot files, automatically find snapshots if none provided (default: None)', default = [])
+    parser.add_argument('--pvarnames', nargs = "*", help = 'Particle variable name(s) to export, leave empty to get list of available names (default: '+' '.join(sorted(pvarname_list))+')', default = pvarname_list)
+    parser.add_argument('--pvarfiles', nargs = "*", help = 'Name(s) of particle snapshot files, automatically find snapshots if none provided (default: None)', default = [])
+    parser.add_argument('--directory', help = 'Directory of input data (default: .)', default = '.')
+    parser.add_argument('--verbose', action = 'store_true', help = 'Verbose output (default: False)', default = False)
+    parser.add_argument('--daemon_mode', action = 'store_true', help = 'Daemon mode, automatically restart code after set wait time (default: False)', default = False)
+    parser.add_argument('--wait_time', help = 'Wait time when running in daemon mode (default: '+str(default_auto_wait)+')', default = default_auto_wait, type=int)
 
     args = parser.parse_args()
-    for varfile in args.varfiles:
-    	export_pencil(varnames=args.varnames, varfile=varfile, data_directory=args.directory+'/', pvar=False, verbose=args.verbose)
-    for pvarfile in args.pvarfiles:
-        export_pencil(varnames=args.pvarnames, varfile=pvarfile, data_directory=args.directory+'/', pvar=True, verbose=args.verbose)
+
+    # Check arguments are compatible
+    if args.daemon_mode:
+        if len(args.varfiles) > 0 or len(args.pvarfiles) > 0:
+            print('pySnapCollate: Explicit snapshot names given, turning off daemon mode')
+            args.daemon_mode = False
+    if len(args.varfiles) == 0 and len(args.varnames) == 0:
+        print('pySnapCollate: Must provide at least varnames or varfiles')
+        sys.exit(1)
+    if len(args.pvarfiles) == 0 and len(args.pvarnames) == 0:
+        print('pySnapCollate: Must provide at least pvarnames or pvarfiles')
+        sys.exit(1)
+
+    # Run export routines at least once        
+    while True:
+
+        # Check if snapshot names are provided
+        if len(args.varfiles) > 0:
+            varfiles = args.varfiles
+        else: # Automatically discover snapshots
+            directory = os.path.expanduser(args.directory) # Source directory
+            data_dir = os.path.join(directory, "data/proc0") # proc0 data directory
+            varfile_pattern = os.path.join(data_dir, "VAR*") # varfile search pattern
+            varfiles_full_path = glob.glob(varfile_pattern) # paths of varfiles for proc0
+            varfiles = [os.path.basename(file_path) for file_path in varfiles_full_path] # only the varfile names
+            needed_varfiles = []
+            # Check if we need to process varfiles or if we already have all variables existig locally
+            for varfile in varfiles:
+                varfile_still_needed = False
+                for varname in args.varnames:
+                    existing_exported_files = glob.glob('exported__'+varname+'__'+varfile+'.*')
+                    if existing_exported_files == 0:
+                        varfile_still_needed = True
+                if varfile_still_needed:
+                    needed_varfiles.append(varfile)
+            varfiles = needed_varfiles
+
+        # Check if snapshot names are provided
+        if len(args.pvarfiles) > 0:
+            pvarfiles = args.pvarfiles
+        else: # Automatically discover snapshots
+            directory = os.path.expanduser(args.directory) # Source directory
+            data_dir = os.path.join(directory, "data/proc0") # proc0 data directory
+            pvarfile_pattern = os.path.join(data_dir, "PVAR*") # pvarfile search pattern
+            pvarfiles_full_path = glob.glob(varfile_pattern) # paths of pvarfiles for proc0
+            pvarfiles = [os.path.basename(file_path) for file_path in pvarfiles_full_path] # only the pvarfile names
+            needed_pvarfiles = []
+            # Check if we need to process varfiles or if we already have all variables existig locally
+            for pvarfile in pvarfiles:
+                parfile_still_needed = False
+                for pvarname in args.pvarnames:
+                    existing_exported_files = glob.glob('exported__'+pvarname+'__'+pvarfile+'.*')
+                    if existing_exported_files == 0:
+                        pvarfile_still_needed = True
+                if pvarfile_still_needed:
+                    needed_pvarfiles.append(pvarfile)
+            pvarfiles = needed_pvarfiles
+
+        # Export variables
+        for varfile in varfiles:
+            export_pencil(varnames=args.varnames, varfile=varfile, data_directory=args.directory+'/', pvar=False, verbose=args.verbose)
+
+        # Export particle variables
+        for pvarfile in pvarfiles:
+            export_pencil(varnames=args.pvarnames, varfile=pvarfile, data_directory=args.directory+'/', pvar=True, verbose=args.verbose)
+
+        # Keep on looping if in daemon mode
+        if args.daemon_mode:  
+            time.sleep(args.wait_time * 60)
+        else: # otherwise break out
+            break
 
 if __name__ == "__main__":
     main()
