@@ -173,7 +173,7 @@ def start_daemon(args):
         f"#PBS -r n\n",
         f"{environment}\n",
         f"cd {target}\n",
-        f"pySnapCollate --directory {source} --varnames {varnames} --pvarnames {pvarnames} --verbose {verbose} --daemon_mode >> pySnapCollate.output \n"
+        f"pySnapCollate --directory {source} --varnames {varnames} --pvarnames {pvarnames} "+"--verbose "*verbose+" --daemon_mode >> pySnapCollate.output \n"
     ]
 
     # Write run script to file
