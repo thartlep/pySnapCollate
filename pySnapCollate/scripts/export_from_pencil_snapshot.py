@@ -110,12 +110,12 @@ def main():
             directory = os.path.expanduser(args.directory) # Source directory
             data_dir = os.path.join(directory, "data/proc0") # proc0 data directory
             pvarfile_pattern = os.path.join(data_dir, "PVAR*") # pvarfile search pattern
-            pvarfiles_full_path = glob.glob(varfile_pattern) # paths of pvarfiles for proc0
+            pvarfiles_full_path = glob.glob(pvarfile_pattern) # paths of pvarfiles for proc0
             pvarfiles = [os.path.basename(file_path) for file_path in pvarfiles_full_path] # only the pvarfile names
             needed_pvarfiles = []
             # Check if we need to process varfiles or if we already have all variables existig locally
             for pvarfile in pvarfiles:
-                parfile_still_needed = False
+                pvarfile_still_needed = False
                 for pvarname in args.pvarnames:
                     existing_exported_files = glob.glob('exported__'+pvarname+'__'+pvarfile+'.*')
                     if existing_exported_files == 0:
