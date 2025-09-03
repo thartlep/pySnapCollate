@@ -166,14 +166,16 @@ def start_daemon(args):
     # Generate run script
     lines = [
         f"#!/bin/csh\n",
-        f"#PBS -S /bin/csh\n",
-        f"#PBS -W group_list={group}\n",
-        f"#PBS -l {resources}\n",
-        f"#PBS -l walltime={lifetime}:00:00\n",
-        f"#PBS -r n\n",
-        f"{environment}\n",
-        f"cd {target}\n",
-        f"pySnapCollate --directory {source} --varnames {varnames} --pvarnames {pvarnames} "+"--verbose "*verbose+" --daemon_mode >> pySnapCollate.output \n"
+        f"#PBS -S /bin/csh\n", # specify job shell
+        f"#PBS -W group_list={group}\n", # specify group ID to charge for this job
+        f"#PBS -l {resources}\n", # specify requested resources
+        f"#PBS -l walltime={lifetime}:00:00\n", # specify job walltime
+        f"#PBS -N {args.name}\n",  # set job name
+        f"#PBS -e {daemon_dir}\n", # direct standard error output to deamon config directory
+        f"#PBS -o {daemon_dir}\n", # direct standard output to deamon config directory
+        f"{environment}\n", # shell command to setup environment
+        f"cd {target}\n", # change into working directory
+        f"pySnapCollate --directory {source} --varnames {varnames} --pvarnames {pvarnames} "+"--verbose "*verbose+" --daemon_mode >> pySnapCollate.output \n" # run command
     ]
 
     # Write run script to file
