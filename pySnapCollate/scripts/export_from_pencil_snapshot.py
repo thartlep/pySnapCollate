@@ -102,6 +102,9 @@ def main():
                 if varfile_still_needed:
                     needed_varfiles.append(varfile)
             varfiles = needed_varfiles
+            if args.verbose:
+                if len(varfiles) > 0:
+                    print(f"New or incompletely exported varfile(s) found: {', '.join(varfiles)}")
 
         # Check if snapshot names are provided
         if len(args.pvarfiles) > 0:
@@ -123,6 +126,9 @@ def main():
                 if pvarfile_still_needed:
                     needed_pvarfiles.append(pvarfile)
             pvarfiles = needed_pvarfiles
+            if args.verbose:
+                if len(pvarfiles) > 0:
+                    print(f"New or incompletely exported pvarfile(s) found: {', '.join(pvarfiles)}")
 
         # Export variables
         for varfile in varfiles:
@@ -134,6 +140,8 @@ def main():
 
         # Keep on looping if in daemon mode
         if args.daemon_mode:  
+            if args.verbose:
+                print('Waiting for next attempt at finding new snapshots ...')
             time.sleep(args.wait_time * 60)
         else: # otherwise break out
             break
