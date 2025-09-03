@@ -97,7 +97,7 @@ def main():
                 varfile_still_needed = False
                 for varname in args.varnames:
                     existing_exported_files = glob.glob('exported__'+varname+'__'+varfile+'.*')
-                    if existing_exported_files == 0:
+                    if len(existing_exported_files) == 0:
                         varfile_still_needed = True
                 if varfile_still_needed:
                     needed_varfiles.append(varfile)
@@ -118,7 +118,7 @@ def main():
                 pvarfile_still_needed = False
                 for pvarname in args.pvarnames:
                     existing_exported_files = glob.glob('exported__'+pvarname+'__'+pvarfile+'.*')
-                    if existing_exported_files == 0:
+                    if len(existing_exported_files) == 0:
                         pvarfile_still_needed = True
                 if pvarfile_still_needed:
                     needed_pvarfiles.append(pvarfile)
