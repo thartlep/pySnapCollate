@@ -16,6 +16,7 @@ import re
 import glob
 import errno
 import shutil
+from pySnapCollate.utilities import resolve_path
 
 config_dir_name = "~/.pySnapCollate"
 default_default_queue = 'normal'
@@ -45,8 +46,8 @@ def setup_daemon(args):
     # Prepare the configuration data
     config_data = {
         "name": args.name,
-        "source": args.source,
-        "target": args.target,
+        "source": resolve_path(args.source),
+        "target": resolve_path(args.target),
         "lifetime": args.lifetime,
         "group": args.group,
         "resources": args.resources,
