@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pySnapCollate"
-version = "0.1"
+version = "0.2"
 description = "A Python package to automatically collect distributed simulation output (snapshots) from PENCIL and combine data into non-parallel data files for easy archiving and analysis."
 authors = [
     {name = "Thomas Hartlep", email = "hartlep@baeri.org"}

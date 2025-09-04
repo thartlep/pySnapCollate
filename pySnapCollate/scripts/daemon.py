@@ -17,17 +17,17 @@ import glob
 import errno
 import shutil
 
-default_config_dir_name = "~/.pySnapCollate"
-default_queue = 'normal'
-default_lifetime = 8
-default_resources = 'select=1:ncpus=24:mpiprocs=1:ompthreads=48:model=has'
-default_environment = 'conda activate pencil'
+config_dir_name = "~/.pySnapCollate"
+default_default_queue = 'normal'
+default_default_lifetime = 8
+default_default_resources = 'select=1:ncpus=24:mpiprocs=1:ompthreads=48:model=has'
+default_default_environment = 'conda activate pencil'
 varname_list = ['dx', 'dy', 'dz', 'np', 'rho', 'rhop', 't', 'ux', 'uy', 'uz', 'x', 'y', 'z']
 pvarname_list = ['ipars', 'ivpx', 'ivpy', 'ivpz', 'ixp', 'iyp', 'izp', 'vpx', 'vpy', 'vpz', 'xp', 'yp', 'zp']
 
 def setup_daemon(args):
     # Define the path to the daemon configuration directory
-    config_dir = os.path.expanduser(default_config_dir_name)
+    config_dir = os.path.expanduser(config_dir_name)
     os.makedirs(config_dir, exist_ok=True)  # Create the directory if it doesn't exist
 
     # Define the path for the specific daemon
@@ -68,7 +68,7 @@ def setup_daemon(args):
 ####################################################
 def inspect_daemon(args):
     # Define the path to the daemon configuration directory
-    config_dir = os.path.expanduser(default_config_dir_name)
+    config_dir = os.path.expanduser(config_dir_name)
     daemon_dir = os.path.join(config_dir, args.name)  # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json")
     active_pattern = os.path.join(daemon_dir, "active_job.*") # Acive daemo tag
@@ -106,7 +106,7 @@ def inspect_daemon(args):
 
 ####################################################
 def start_daemon(args):
-    config_dir = os.path.expanduser(default_config_dir_name) # Daemon configuration directory
+    config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
     daemon_dir = os.path.join(config_dir, args.name)  # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json") # Configuration file for the specific daemon
     script_path = os.path.join(daemon_dir, "run.csh") # Run script for the specific daemon
@@ -206,7 +206,7 @@ def start_daemon(args):
 
 ####################################################
 def stop_daemon(args):
-    config_dir = os.path.expanduser(default_config_dir_name) # Daemon configuration directory
+    config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
     daemon_dir = os.path.join(config_dir, args.name)  # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json") # Configuration file for the specific daemon
     script_path = os.path.join(daemon_dir, "run.csh") # Run script for the specific daemon
@@ -275,7 +275,7 @@ def list_daemons():
 
 ####################################################
 def remove_daemon(args):
-    config_dir = os.path.expanduser(default_config_dir_name) # Daemon configuration directory
+    config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
     daemon_dir = os.path.join(config_dir, args.name)  # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json") # Configuration file for the specific daemon
     script_path = os.path.join(daemon_dir, "run.csh") # Run script for the specific daemon
@@ -321,17 +321,73 @@ def remove_daemon(args):
                 print(f"Unexpected OS error: {e}")
 
 ####################################################
+def read_defaults():
+    config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
+    defaults_path = os.path.join(config_dir, "defaults.json") # Defaults JSON file
+    
+    # Read the configuration data from the JSON file
+    try:
+        with open(defaults_path, 'r') as defaults_file:
+            defaults = json.load(defaults_file)
+    except Exception as e:
+        defaults = {"group": None,
+                    "resources": default_default_resources,
+                    "environment": default_default_environment,
+                    "lifetime": default_default_lifetime,
+                    "queue": default_default_queue,
+                    }
+
+    return defaults
+
+####################################################
+def set_defaults(args):
+    config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
+    os.makedirs(config_dir, exist_ok=True)  # Create the directory if it doesn't exist
+    defaults_path = os.path.join(config_dir, "defaults.json") # Defaults JSON file
+
+    # Prepare the defaults data
+    defaults = {"group": args.group,
+                "resources": args.resources,
+                "environment": args.environment,
+                "lifetime": args.lifetime,
+                "queue": args.queue,
+               }
+
+    # Write defaults to the JSON file
+    try:
+        with open(defaults_path, 'w') as defaults_file:
+            json.dump(defaults, defaults_file, indent=4)
+    except Exception as e:
+        print(f"An error occurred while setting defaults: {e}")
+
+ ####################################################
 def main():
+
+    defaults = read_defaults()
+    default_group = 'None' if defaults["group"] is None else defaults["group"]
+    default_resources = defaults["resources"]
+    default_environment = defaults["environment"]
+    default_lifetime = defaults["lifetime"]
+    default_queue = defaults["queue"]
+
     parser = argparse.ArgumentParser(description="Manage your pySnapCollate daemons.")
     subparsers = parser.add_subparsers(dest='command', required=True)
+
+    # Default command
+    default_parser = subparsers.add_parser('defaults', help='Define default settings')
+    default_parser.add_argument('--group', help='Group ID', default = None, required = True)
+    default_parser.add_argument('--resources', help='Resource string (default: '+default_default_resources+')', default = default_default_resources)
+    default_parser.add_argument('--environment', help='Command line for setting up environment (default: '+default_default_environment+')', default = default_default_environment)
+    default_parser.add_argument('--lifetime', help='Lifetime in hours (default: '+str(default_default_lifetime)+')', default = default_default_lifetime, type = int)
+    default_parser.add_argument('--queue', help='Name of scheduler queue (default: '+default_default_queue+')', default = default_default_queue)
 
     # Setup command
     setup_parser = subparsers.add_parser('setup', help='Set up a new daemon')
     setup_parser.add_argument('--name', help='Name of the daemon', required=True)
     setup_parser.add_argument('--source', help='Source directory', required=True)
     setup_parser.add_argument('--target', help='Target directory', required=True)
-    setup_parser.add_argument('--group', help='Group ID', required=True)
-    setup_parser.add_argument('--resources', help='Resource string (default '+default_resources+')', default = default_resources)
+    setup_parser.add_argument('--group', help='Group ID (default: '+default_group+')', default = default_group)
+    setup_parser.add_argument('--resources', help='Resource string (default: '+default_resources+')', default = default_resources)
     setup_parser.add_argument('--environment', help='Command line for setting up environment (default: '+default_environment+')', default = default_environment)
     setup_parser.add_argument('--lifetime', help='Lifetime in hours (default: '+str(default_lifetime)+')', default = default_lifetime, type = int)
     setup_parser.add_argument('--queue', help='Name of scheduler queue (default: '+default_queue+')', default = default_queue)
@@ -364,7 +420,9 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == 'setup':
+    if args.command == 'defaults':
+        set_defaults(args)
+    elif args.command == 'setup':
         setup_daemon(args)
     elif args.command == 'start':
         start_daemon(args)
@@ -375,7 +433,7 @@ def main():
     elif args.command == 'remove':
         remove_daemon(args)
     elif args.command == 'list':
-        list_daemons()  # Call without arguments
+        list_daemons()
 
 if __name__ == "__main__":
     main()
