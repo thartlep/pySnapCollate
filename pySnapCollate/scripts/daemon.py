@@ -57,6 +57,7 @@ def setup_daemon(args):
         "pvarnames":  ' '.join(args.pvarnames),
         "verbose": args.verbose,
         "analysis": args.analysis,
+        "analysis_dir": resolve_path(args.analysis_dir) if args.analysis_dir is not None else resolve_path(args.target)
     }
 
     # Write the configuration data to the JSON file
@@ -400,6 +401,7 @@ def main():
     setup_parser.add_argument('--force', action = 'store_true', help = 'Forced override of existing daemon configuration (default: False)', default = False)
     setup_parser.add_argument('--verbose', action = 'store_true', help = 'Verbose output (default: False)', default = False)
     setup_parser.add_argument('--analysis', help='Analysis command to be run in target directory after export (default: None)', default = None)
+    setup_parser.add_argument('--analysis_dir', help='Analysis directory (default: same as target directory)', default = None)
 
     # Start command
     start_parser = subparsers.add_parser('start', help='Start a daemon')

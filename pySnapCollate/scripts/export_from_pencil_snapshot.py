@@ -66,6 +66,7 @@ def main():
     parser.add_argument('--daemon_mode', action = 'store_true', help = 'Daemon mode, automatically restart code after set wait time (default: False)', default = False)
     parser.add_argument('--wait_time', help = 'Wait time when running in daemon mode (default: '+str(default_auto_wait)+')', default = default_auto_wait, type=int)
     parser.add_argument('--analysis', help='Analysis command to be run after export (default: None)', default = None)
+    parser.add_argument('--analysis_dir', help='Analysis directory (default: .)', default = '.')
 
     args = parser.parse_args()
 
@@ -148,6 +149,7 @@ def main():
             try:
                 from pySnapCollate.utilities import remove_enclosing_quotes
                 result = subprocess.run(remove_enclosing_quotes(args.analysis).split(), 
+                                          cwd=args.analysis_dir, # Change to analysis directory
                                           check=True,  # Raises CalledProcessError if command fails
                                           capture_output=True,  # Capture stdout and stderr
                                           text=True)  # Return output as string instead of bytes
