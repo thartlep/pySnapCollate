@@ -29,7 +29,17 @@ def resolve_path(path):
         import os
         return os.path.abspath(os.path.expanduser(path))
     except Exception as e:
-        return path  # Fallback to original path if resolution fails   
+        return path  # Fallback to original path if resolution fails  
+#-----------------------------------------
+def remove_enclosing_quotes(s):
+    """
+    Removes only the outermost matching quotes, 
+    preserving internal quotes.
+    """
+    # Check if string starts and ends with same quote type
+    if len(s) >= 2 and s[0] == s[-1] and s[0] in ["'", '"']:
+        return s[1:-1]
+    return s
 
 ##################################################################
 # End of file: utilities.py                                      #

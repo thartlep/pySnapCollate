@@ -56,6 +56,7 @@ def setup_daemon(args):
         "varnames":  ' '.join(args.varnames),
         "pvarnames":  ' '.join(args.pvarnames),
         "verbose": args.verbose,
+        "analysis": args.analysis,
     }
 
     # Write the configuration data to the JSON file
@@ -163,6 +164,8 @@ def start_daemon(args):
     varnames = config_data["varnames"]
     pvarnames = config_data["pvarnames"]
     verbose = config_data["verbose"]
+    optional_analysis_string = " --analysis '"+config_data["analysis"]+"'" if config_data["analysis"] is not None else ""
+
 
     # Generate run script
     lines = [
@@ -176,7 +179,7 @@ def start_daemon(args):
         f"#PBS -o {daemon_dir}\n", # direct standard output to deamon config directory
         f"{environment}\n", # shell command to setup environment
         f"cd {target}\n", # change into working directory
-        f"pySnapCollate --directory {source} --varnames {varnames} --pvarnames {pvarnames} "+"--verbose "*verbose+" --daemon_mode >> pySnapCollate.output \n" # run command
+        f"pySnapCollate --directory {source} --varnames {varnames} --pvarnames {pvarnames}"+" --verbose "*verbose+" "+optional_analysis_string+" --daemon_mode >> pySnapCollate.output \n" # run command
     ]
 
     # Write run script to file
@@ -396,6 +399,7 @@ def main():
     setup_parser.add_argument('--pvarnames', nargs = "*", help='Name(s) of particle variable(s) name(s) to export (default: '+' '.join(sorted(pvarname_list))+')', default = pvarname_list)
     setup_parser.add_argument('--force', action = 'store_true', help = 'Forced override of existing daemon configuration (default: False)', default = False)
     setup_parser.add_argument('--verbose', action = 'store_true', help = 'Verbose output (default: False)', default = False)
+    setup_parser.add_argument('--analysis', help='Analysis command to be run in target directory after export (default: None)', default = None)
 
     # Start command
     start_parser = subparsers.add_parser('start', help='Start a daemon')

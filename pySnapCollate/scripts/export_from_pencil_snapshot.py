@@ -14,6 +14,7 @@ import numpy as np
 import sys
 import os
 import glob
+import subprocess
 
 def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
 
@@ -64,6 +65,7 @@ def main():
     parser.add_argument('--verbose', action = 'store_true', help = 'Verbose output (default: False)', default = False)
     parser.add_argument('--daemon_mode', action = 'store_true', help = 'Daemon mode, automatically restart code after set wait time (default: False)', default = False)
     parser.add_argument('--wait_time', help = 'Wait time when running in daemon mode (default: '+str(default_auto_wait)+')', default = default_auto_wait, type=int)
+    parser.add_argument('--analysis', help='Analysis command to be run after export (default: None)', default = None)
 
     args = parser.parse_args()
 
@@ -81,6 +83,9 @@ def main():
 
     # Run export routines at least once        
     while True:
+
+        if args.verbose:
+            print(f"Looking for new snapshots ...")
 
         # Check if snapshot names are provided
         if len(args.varfiles) > 0:
@@ -138,6 +143,20 @@ def main():
         for pvarfile in pvarfiles:
             export_pencil(varnames=args.pvarnames, varfile=pvarfile, data_directory=args.directory+'/', pvar=True, verbose=args.verbose)
 
+        # Run analysis code if provided
+        if args.analysis is not None:
+            try:
+                from pySnapCollate.utilities import remove_enclosing_quotes
+                result = subprocess.run(remove_enclosing_quotes(args.analysis).split(), 
+                                          check=True,  # Raises CalledProcessError if command fails
+                                          capture_output=True,  # Capture stdout and stderr
+                                          text=True)  # Return output as string instead of bytes
+                print(result.stdout)
+            except subprocess.CalledProcessError as e:
+                print(f"Analysis command failed with error: {e}")
+            except FileNotFoundError as e:
+                print(f"Analysis executable/script not found: {e}")
+    
         # Keep on looping if in daemon mode
         if args.daemon_mode:  
             if args.verbose:
