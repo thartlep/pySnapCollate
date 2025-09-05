@@ -270,7 +270,8 @@ def list_daemons():
         if daemon_names:
             print("Existing daemons:")
             for name in daemon_names:
-                print(name)
+                if os.path.isdir(os.path.join(config_dir, name)):
+                    print(name)
         else:
             print("No daemons found.")
     except Exception as e:
