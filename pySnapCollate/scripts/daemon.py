@@ -5,7 +5,7 @@
 # Written by
 # Thomas Hartlep
 # Bay Area Environmental Research Institute
-# August 2025
+# August/September 2025
 ####################################################
 
 import os
@@ -69,9 +69,8 @@ def setup_daemon(args):
 
 ####################################################
 def inspect_daemon(args):
-    # Define the path to the daemon configuration directory
-    config_dir = os.path.expanduser(config_dir_name)
-    daemon_dir = os.path.join(config_dir, args.name)  # Directory for the specific daemon
+    config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
+    daemon_dir = os.path.join(config_dir, args.name) # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json")
     active_pattern = os.path.join(daemon_dir, "active_job.*") # Acive daemo tag
 
@@ -109,7 +108,7 @@ def inspect_daemon(args):
 ####################################################
 def start_daemon(args):
     config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
-    daemon_dir = os.path.join(config_dir, args.name)  # Directory for the specific daemon
+    daemon_dir = os.path.join(config_dir, args.name) # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json") # Configuration file for the specific daemon
     script_path = os.path.join(daemon_dir, "run.csh") # Run script for the specific daemon
     active_pattern = os.path.join(daemon_dir, "active_job.*") # Acive daemo tag
@@ -211,7 +210,7 @@ def start_daemon(args):
 ####################################################
 def stop_daemon(args):
     config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
-    daemon_dir = os.path.join(config_dir, args.name)  # Directory for the specific daemon
+    daemon_dir = os.path.join(config_dir, args.name) # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json") # Configuration file for the specific daemon
     script_path = os.path.join(daemon_dir, "run.csh") # Run script for the specific daemon
     active_pattern = os.path.join(daemon_dir, "active_job.*") # Acive daemo tag
@@ -280,7 +279,7 @@ def list_daemons():
 ####################################################
 def remove_daemon(args):
     config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
-    daemon_dir = os.path.join(config_dir, args.name)  # Directory for the specific daemon
+    daemon_dir = os.path.join(config_dir, args.name) # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json") # Configuration file for the specific daemon
     script_path = os.path.join(daemon_dir, "run.csh") # Run script for the specific daemon
     active_pattern = os.path.join(daemon_dir, "active_job.*") # Acive daemo tag

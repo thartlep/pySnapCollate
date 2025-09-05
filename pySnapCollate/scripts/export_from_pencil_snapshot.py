@@ -6,7 +6,7 @@
 # Written by
 # Thomas Hartlep
 # Bay Area Environmental Research Institute
-# November/December 2024; August 2025
+# November/December 2024; August/September 2025
 ####################################################
 
 import time, gc

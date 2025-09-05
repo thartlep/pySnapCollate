@@ -4,7 +4,7 @@
 # Written by
 # Thomas Hartlep
 # Bay Area Environmental Research Institute
-# January, October 2024, August, September 2025
+# January/October 2024, August/September 2025
 ####################################################
 
 #-----------------------------------------
