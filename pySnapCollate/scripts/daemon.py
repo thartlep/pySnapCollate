@@ -160,12 +160,12 @@ def start_daemon(args):
     resources = config_data["resources"]
     environment = config_data["environment"]
     target = config_data["target"]
-    source = config_data["source"]
-    varnames = config_data["varnames"]
-    pvarnames = config_data["pvarnames"]
-    verbose = config_data["verbose"]
-    optional_analysis_string = " --analysis '"+config_data["analysis"]+"'" if config_data["analysis"] is not None else ""
-
+    source_string = " --directory "+config_data["source"]
+    varnames_string = " --varnames "+config_data["varnames"]
+    pvarnames_string = " --pvarnames "+config_data["pvarnames"]
+    analysis_string = " --analysis "+config_data["analysis"] if config_data["analysis"] != "" else ""
+    analysis_dir_string = " --analysis_dir "+config_data["analysis_dir"] if config_data["analysis_dir"] != "" else ""
+    verbose_string = " --verbose" if config_data["verbose"] else ""
 
     # Generate run script
     lines = [
@@ -179,7 +179,7 @@ def start_daemon(args):
         f"#PBS -o {daemon_dir}\n", # direct standard output to deamon config directory
         f"{environment}\n", # shell command to setup environment
         f"cd {target}\n", # change into working directory
-        f"pySnapCollate --directory {source} --varnames {varnames} --pvarnames {pvarnames}"+" --verbose "*verbose+" "+optional_analysis_string+" --daemon_mode >> pySnapCollate.output \n" # run command
+        f"pySnapCollate "+source_string+varnames_string+pvarnames_string+verbose_string+analysis_string+analysis_dir_string+" --daemon_mode >> pySnapCollate.output \n" # run command
     ]
 
     # Write run script to file

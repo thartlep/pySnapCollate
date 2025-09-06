@@ -57,9 +57,9 @@ def main():
     # Parse command line argument
     import argparse
     parser = argparse.ArgumentParser(description = 'Export variables from pencil snapshot.')
-    parser.add_argument('--varnames', nargs = "*", help = 'Variable name(s) to export, leave empty to get list of available names (default: '+' '.join(sorted(varname_list))+')', default = varname_list)
+    parser.add_argument('--varnames', nargs = "*", help = 'Variable name(s) to export, leave empty to get list of available names if varfile provided (default: '+' '.join(sorted(varname_list))+')', default = varname_list)
     parser.add_argument('--varfiles', nargs = "*", help = 'Name(s) of snapshot files, automatically find snapshots if none provided (default: None)', default = [])
-    parser.add_argument('--pvarnames', nargs = "*", help = 'Particle variable name(s) to export, leave empty to get list of available names (default: '+' '.join(sorted(pvarname_list))+')', default = pvarname_list)
+    parser.add_argument('--pvarnames', nargs = "*", help = 'Particle variable name(s) to export, leave empty to get list of available names if pvarfile provided (default: '+' '.join(sorted(pvarname_list))+')', default = pvarname_list)
     parser.add_argument('--pvarfiles', nargs = "*", help = 'Name(s) of particle snapshot files, automatically find snapshots if none provided (default: None)', default = [])
     parser.add_argument('--directory', help = 'Directory of input data (default: .)', default = '.')
     parser.add_argument('--verbose', action = 'store_true', help = 'Verbose output (default: False)', default = False)
@@ -75,23 +75,19 @@ def main():
         if len(args.varfiles) > 0 or len(args.pvarfiles) > 0:
             print('pySnapCollate: Explicit snapshot names given, turning off daemon mode')
             args.daemon_mode = False
-    if len(args.varfiles) == 0 and len(args.varnames) == 0:
-        print('pySnapCollate: Must provide at least varnames or varfiles')
-        sys.exit(1)
-    if len(args.pvarfiles) == 0 and len(args.pvarnames) == 0:
-        print('pySnapCollate: Must provide at least pvarnames or pvarfiles')
-        sys.exit(1)
+    skip_varfiles = (len(args.varfiles) == 0 and len(args.varnames) == 0)
+    skip_pvarfiles = (len(args.pvarfiles) == 0 and len(args.pvarnames) == 0)
 
     # Run export routines at least once        
     while True:
 
-        if args.verbose:
-            print(f"Looking for new snapshots ...")
-
         # Check if snapshot names are provided
         if len(args.varfiles) > 0:
             varfiles = args.varfiles
-        else: # Automatically discover snapshots
+        elif not skip_varfiles:
+            # Automatically discover snapshots
+            if args.verbose:
+                print(f"Looking for VAR files ...", flush=True)
             directory = os.path.expanduser(args.directory) # Source directory
             data_dir = os.path.join(directory, "data/proc0") # proc0 data directory
             varfile_pattern = os.path.join(data_dir, "VAR*") # varfile search pattern
@@ -110,12 +106,14 @@ def main():
             varfiles = needed_varfiles
             if args.verbose:
                 if len(varfiles) > 0:
-                    print(f"New or incompletely exported varfile(s) found: {', '.join(varfiles)}")
+                    print(f"New or incompletely exported varfile(s) found: {', '.join(varfiles)}", flush=True)
 
         # Check if snapshot names are provided
         if len(args.pvarfiles) > 0:
             pvarfiles = args.pvarfiles
-        else: # Automatically discover snapshots
+        elif not skip_pvarfiles: # Automatically discover snapshots
+            if args.verbose:
+                print(f"Looking for PVAR files ...", flush=True)
             directory = os.path.expanduser(args.directory) # Source directory
             data_dir = os.path.join(directory, "data/proc0") # proc0 data directory
             pvarfile_pattern = os.path.join(data_dir, "PVAR*") # pvarfile search pattern
@@ -134,35 +132,36 @@ def main():
             pvarfiles = needed_pvarfiles
             if args.verbose:
                 if len(pvarfiles) > 0:
-                    print(f"New or incompletely exported pvarfile(s) found: {', '.join(pvarfiles)}")
+                    print(f"New or incompletely exported pvarfile(s) found: {', '.join(pvarfiles)}", flush=True)
 
         # Export variables
-        for varfile in varfiles:
-            export_pencil(varnames=args.varnames, varfile=varfile, data_directory=args.directory+'/', pvar=False, verbose=args.verbose)
+        if not skip_varfiles:
+            for varfile in varfiles:
+                export_pencil(varnames=args.varnames, varfile=varfile, data_directory=args.directory+'/', pvar=False, verbose=args.verbose)
 
         # Export particle variables
-        for pvarfile in pvarfiles:
-            export_pencil(varnames=args.pvarnames, varfile=pvarfile, data_directory=args.directory+'/', pvar=True, verbose=args.verbose)
+        if not skip_pvarfiles:
+            for pvarfile in pvarfiles:
+                export_pencil(varnames=args.pvarnames, varfile=pvarfile, data_directory=args.directory+'/', pvar=True, verbose=args.verbose)
 
         # Run analysis code if provided
         if args.analysis is not None:
             try:
                 from pySnapCollate.utilities import remove_enclosing_quotes
-                result = subprocess.run(remove_enclosing_quotes(args.analysis).split(), 
-                                          cwd=args.analysis_dir, # Change to analysis directory
-                                          check=True,  # Raises CalledProcessError if command fails
-                                          capture_output=True,  # Capture stdout and stderr
-                                          text=True)  # Return output as string instead of bytes
-                print(result.stdout)
+                subprocess.run(remove_enclosing_quotes(args.analysis).split(), 
+                               cwd=args.analysis_dir, # Change to analysis directory
+                               stdout=open(os.path.join(args.analysis_dir, remove_enclosing_quotes(args.analysis).split()[0]+'.output'),'a'), # Redirect standard output to file
+                               stderr=subprocess.STDOUT, # Redirect standard error to the same file
+                               check=True)  # Raises CalledProcessError if command fails
             except subprocess.CalledProcessError as e:
-                print(f"Analysis command failed with error: {e}")
+                print(f"Analysis command failed with error: {e}", flush=True)
             except FileNotFoundError as e:
-                print(f"Analysis executable/script not found: {e}")
+                print(f"Analysis executable/script not found: {e}", flush=True)
     
         # Keep on looping if in daemon mode
         if args.daemon_mode:  
             if args.verbose:
-                print('Waiting for next attempt at finding new snapshots ...')
+                print("Waiting for next attempt at finding new snapshots ...", flush=True)
             time.sleep(args.wait_time * 60)
         else: # otherwise break out
             break
