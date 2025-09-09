@@ -17,6 +17,8 @@ import glob
 import errno
 import shutil
 from pySnapCollate.utilities import resolve_path
+from pySnapCollate.scripts.export_from_pencil_snapshot import export as run_direct
+from pySnapCollate import __full_version_info__
 
 config_dir_name = "~/.pySnapCollate"
 default_default_queue = 'normal'
@@ -378,7 +380,8 @@ def main():
     default_queue = defaults["queue"]
 
     parser = argparse.ArgumentParser(description="Manage pySnapCollate daemons on PBS or run export directly on local machine")
-    subparsers = parser.add_subparsers(dest='command', required=True)
+    parser.add_argument('-v',  '--version', action='version', version='pySnapCollate {}'.format(__full_version_info__))
+    subparsers = parser.add_subparsers(dest='command') #, required=True)
 
     # Default command
     default_parser = subparsers.add_parser('defaults', help='Define default configuration settings')
@@ -458,8 +461,9 @@ def main():
     elif args.command == 'list':
         list_daemons()
     elif args.command == 'direct':
-        from pySnapCollate.scripts.export_from_pencil_snapshot import export as run_direct
         run_direct(args)
+    else:
+        parser.print_help()
 
 if __name__ == "__main__":
     main()
