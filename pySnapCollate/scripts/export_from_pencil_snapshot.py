@@ -70,6 +70,10 @@ def main():
 
     args = parser.parse_args()
 
+    export(args)
+
+def export(args):
+
     # Check arguments are compatible
     if args.daemon_mode:
         if len(args.varfiles) > 0 or len(args.pvarfiles) > 0:

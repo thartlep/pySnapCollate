@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pySnapCollate"
-version = "0.3.3"
+version = "0.4"
 description = "A Python package to automatically collect distributed simulation output (snapshots) from PENCIL and combine data into non-parallel data files for easy archiving and analysis."
 authors = [
     {name = "Thomas Hartlep", email = "hartlep@baeri.org"}
@@ -17,8 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
-pySnapCollate                                                      = "pySnapCollate.scripts.export_from_pencil_snapshot:main"
-pySnapCollate__daemon                                              = "pySnapCollate.scripts.daemon:main"
+pySnapCollate                                                     = "pySnapCollate.scripts.daemon:main"
 
 [tool.setuptools.packages.find]
 include = ["pySnapCollate", "pySnapCollate.scripts"]  # Packages to include

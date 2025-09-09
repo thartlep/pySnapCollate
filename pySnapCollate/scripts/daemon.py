@@ -25,6 +25,7 @@ default_default_resources = 'select=1:ncpus=24:mpiprocs=1:ompthreads=48:model=ha
 default_default_environment = 'conda activate pencil'
 varname_list = ['dx', 'dy', 'dz', 'np', 'rho', 'rhop', 't', 'ux', 'uy', 'uz', 'x', 'y', 'z']
 pvarname_list = ['ipars', 'ivpx', 'ivpy', 'ivpz', 'ixp', 'iyp', 'izp', 'vpx', 'vpy', 'vpz', 'xp', 'yp', 'zp']
+default_auto_wait = 10
 
 def setup_daemon(args):
     # Define the path to the daemon configuration directory
@@ -180,7 +181,7 @@ def start_daemon(args):
         f"#PBS -o {daemon_dir}\n", # direct standard output to deamon config directory
         f"{environment}\n", # shell command to setup environment
         f"cd {target}\n", # change into working directory
-        f"pySnapCollate "+source_string+varnames_string+pvarnames_string+verbose_string+analysis_string+analysis_dir_string+daemon_mode_string+" >> pySnapCollate.output \n" # run command
+        f"pySnapCollate direct"+source_string+varnames_string+pvarnames_string+verbose_string+analysis_string+analysis_dir_string+daemon_mode_string+" >> pySnapCollate.output \n" # run command
     ]
 
     # Write run script to file
@@ -376,11 +377,11 @@ def main():
     default_lifetime = defaults["lifetime"]
     default_queue = defaults["queue"]
 
-    parser = argparse.ArgumentParser(description="Manage your pySnapCollate daemons.")
+    parser = argparse.ArgumentParser(description="Manage pySnapCollate daemons on PBS or run export directly on local machine")
     subparsers = parser.add_subparsers(dest='command', required=True)
 
     # Default command
-    default_parser = subparsers.add_parser('defaults', help='Define default settings')
+    default_parser = subparsers.add_parser('defaults', help='Define default configuration settings')
     default_parser.add_argument('--group', help='Group ID', default = None, required = True)
     default_parser.add_argument('--resources', help='Resource string (default: '+default_default_resources+')', default = default_default_resources)
     default_parser.add_argument('--environment', help='Command line for setting up environment (default: '+default_default_environment+')', default = default_default_environment)
@@ -388,7 +389,7 @@ def main():
     default_parser.add_argument('--queue', help='Name of scheduler queue (default: '+default_default_queue+')', default = default_default_queue)
 
     # Setup command
-    setup_parser = subparsers.add_parser('setup', help='Set up a new daemon')
+    setup_parser = subparsers.add_parser('setup', help='Set up a new daemon for PBS execution')
     setup_parser.add_argument('--name', help='Name of the daemon', required=True)
     setup_parser.add_argument('--source', help='Source directory', required=True)
     setup_parser.add_argument('--target', help='Target directory', required=True)
@@ -405,27 +406,40 @@ def main():
     setup_parser.add_argument('--analysis_dir', help='Analysis directory (default: same as target directory)', default = None)
 
     # Start command
-    start_parser = subparsers.add_parser('start', help='Start a daemon')
+    start_parser = subparsers.add_parser('start', help='Start a daemon via PBS')
     start_parser.add_argument('--name', help='Name of the daemon', required=True)
     start_parser.add_argument('--lifetime', help='Lifetime in hours (overrides setup value)', default = None, type = int)
     start_parser.add_argument('--queue', help='Name of scheduler queue (overrides setup value)', default = None)
     start_parser.add_argument('--once_only', action = 'store_true', help = 'Run once only, then automatically stop (default: False)', default = False)
 
     # Stop command
-    stop_parser = subparsers.add_parser('stop', help='Stop a daemon')
+    stop_parser = subparsers.add_parser('stop', help='Stop a daemon via PBS')
     stop_parser.add_argument('--name', help='Name of the daemon', required=True)
 
     # Inspect command
-    inspect_parser = subparsers.add_parser('inspect', help='Inspect daemon configuration')
+    inspect_parser = subparsers.add_parser('inspect', help='Inspect a daemon configuration')
     inspect_parser.add_argument('--name', help='Name of the daemon', required=True)
 
     # Remove command
-    remove_parser = subparsers.add_parser('remove', help='Remove a daemon, that is, delete the daemon configuration')
+    remove_parser = subparsers.add_parser('remove', help='Remove a daemon configuration')
     remove_parser.add_argument('--name', help='Name of the daemon', required=True)
     remove_parser.add_argument('--force', action = 'store_true', help='Force deleting even with unknown files are in configuration directory', default = False)
 
     # List command
-    list_parser = subparsers.add_parser('list', help='List all daemons')
+    list_parser = subparsers.add_parser('list', help='List configured daemon(s)')
+
+    # Direct command
+    direct_parser = subparsers.add_parser('direct', help='Run collate operation directly bypassing daemon configuration setup')
+    direct_parser.add_argument('--varnames', nargs = "*", help = 'Variable name(s) to export, leave empty to get list of available names if varfile provided (default: '+' '.join(sorted(varname_list))+')', default = varname_list)
+    direct_parser.add_argument('--varfiles', nargs = "*", help = 'Name(s) of snapshot files, automatically find snapshots if none provided (default: None)', default = [])
+    direct_parser.add_argument('--pvarnames', nargs = "*", help = 'Particle variable name(s) to export, leave empty to get list of available names if pvarfile provided (default: '+' '.join(sorted(pvarname_list))+')', default = pvarname_list)
+    direct_parser.add_argument('--pvarfiles', nargs = "*", help = 'Name(s) of particle snapshot files, automatically find snapshots if none provided (default: None)', default = [])
+    direct_parser.add_argument('--directory', help = 'Directory of input data (default: .)', default = '.')
+    direct_parser.add_argument('--verbose', action = 'store_true', help = 'Verbose output (default: False)', default = False)
+    direct_parser.add_argument('--daemon_mode', action = 'store_true', help = 'Daemon mode, automatically restart code after set wait time (default: False)', default = False)
+    direct_parser.add_argument('--wait_time', help = 'Wait time when running in daemon mode (default: '+str(default_auto_wait)+')', default = default_auto_wait, type=int)
+    direct_parser.add_argument('--analysis', help='Analysis command to be run after export (default: None)', default = None)
+    direct_parser.add_argument('--analysis_dir', help='Analysis directory (default: .)', default = '.')
 
     args = parser.parse_args()
 
@@ -443,6 +457,9 @@ def main():
         remove_daemon(args)
     elif args.command == 'list':
         list_daemons()
+    elif args.command == 'direct':
+        from pySnapCollate.scripts.export_from_pencil_snapshot import export as run_direct
+        run_direct(args)
 
 if __name__ == "__main__":
     main()
