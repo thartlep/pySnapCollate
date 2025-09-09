@@ -56,7 +56,7 @@ def setup_daemon(args):
         "varnames":  ' '.join(args.varnames),
         "pvarnames":  ' '.join(args.pvarnames),
         "verbose": args.verbose,
-        "analysis": args.analysis,
+        "analysis": args.analysis if args.analysis is not None else "",
         "analysis_dir": resolve_path(args.analysis_dir) if args.analysis_dir is not None else resolve_path(args.target)
     }
 
