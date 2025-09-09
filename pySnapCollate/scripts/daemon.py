@@ -166,6 +166,7 @@ def start_daemon(args):
     analysis_string = " --analysis "+config_data["analysis"] if config_data["analysis"] != "" else ""
     analysis_dir_string = " --analysis_dir "+config_data["analysis_dir"] if config_data["analysis_dir"] != "" else ""
     verbose_string = " --verbose" if config_data["verbose"] else ""
+    daemon_mode_string = " --daemon_mode" if not args.once_only else ""
 
     # Generate run script
     lines = [
@@ -179,7 +180,7 @@ def start_daemon(args):
         f"#PBS -o {daemon_dir}\n", # direct standard output to deamon config directory
         f"{environment}\n", # shell command to setup environment
         f"cd {target}\n", # change into working directory
-        f"pySnapCollate "+source_string+varnames_string+pvarnames_string+verbose_string+analysis_string+analysis_dir_string+" --daemon_mode >> pySnapCollate.output \n" # run command
+        f"pySnapCollate "+source_string+varnames_string+pvarnames_string+verbose_string+analysis_string+analysis_dir_string+daemon_mode_string+" >> pySnapCollate.output \n" # run command
     ]
 
     # Write run script to file
@@ -408,6 +409,7 @@ def main():
     start_parser.add_argument('--name', help='Name of the daemon', required=True)
     start_parser.add_argument('--lifetime', help='Lifetime in hours (overrides setup value)', default = None, type = int)
     start_parser.add_argument('--queue', help='Name of scheduler queue (overrides setup value)', default = None)
+    start_parser.add_argument('--once_only', action = 'store_true', help = 'Run once only, then automatically stop (default: False)', default = False)
 
     # Stop command
     stop_parser = subparsers.add_parser('stop', help='Stop a daemon')
