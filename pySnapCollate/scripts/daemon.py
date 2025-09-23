@@ -397,7 +397,7 @@ def main():
 
     # Setup command
     setup_parser = subparsers.add_parser('setup', help='Set up a new daemon for PBS execution')
-    setup_parser.add_argument('--name', help='Name of the daemon', required=True)
+    setup_parser.add_argument('name', help='Name of the daemon')
     setup_parser.add_argument('--source', help='Source directory', required=True)
     setup_parser.add_argument('--target', help='Target directory', required=True)
     setup_parser.add_argument('--group', help='Group ID (default: '+default_group+')', default = default_group)
@@ -414,22 +414,22 @@ def main():
 
     # Start command
     start_parser = subparsers.add_parser('start', help='Start a daemon via PBS')
-    start_parser.add_argument('--name', help='Name of the daemon', required=True)
+    start_parser.add_argument('name', help='Name of the daemon')
     start_parser.add_argument('--lifetime', help='Lifetime in hours (overrides setup value)', default = None, type = int)
     start_parser.add_argument('--queue', help='Name of scheduler queue (overrides setup value)', default = None)
     start_parser.add_argument('--once_only', action = 'store_true', help = 'Run once only, then automatically stop (default: False)', default = False)
 
     # Stop command
     stop_parser = subparsers.add_parser('stop', help='Stop a daemon via PBS')
-    stop_parser.add_argument('--name', help='Name of the daemon', required=True)
+    stop_parser.add_argument('name', help='Name of the daemon')
 
     # Inspect command
     inspect_parser = subparsers.add_parser('inspect', help='Inspect a daemon configuration')
-    inspect_parser.add_argument('--name', help='Name of the daemon', required=True)
+    inspect_parser.add_argument('name', help='Name of the daemon')
 
     # Remove command
     remove_parser = subparsers.add_parser('remove', help='Remove a daemon configuration')
-    remove_parser.add_argument('--name', help='Name of the daemon', required=True)
+    remove_parser.add_argument('name', help='Name of the daemon')
     remove_parser.add_argument('--force', action = 'store_true', help='Force deleting even with unknown files are in configuration directory', default = False)
 
     # List command
