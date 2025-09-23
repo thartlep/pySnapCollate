@@ -256,6 +256,10 @@ def stop_daemon(args):
             except subprocess.CalledProcessError as e:
                 # And let user know it wasn't even queued/running
                 print(f"Unable to stop daemon '{args.name}'. Try again")
+        else:
+            print(f"Daemon '{args.name}' is not submitted/running.")
+    else:
+        print(f"Daemon '{args.name}' is not submitted/running.")
 
 
 ####################################################
