@@ -258,7 +258,7 @@ def stop_daemon(args):
                 print(f"Unable to stop daemon '{args.name}'. Try again")
         else:
             print(f"Daemon '{args.name}' is not submitted/running.")
-    else:
+    if len(glob.glob(active_pattern)) == 0:
         print(f"Daemon '{args.name}' is not submitted/running.")
 
 
