@@ -15,6 +15,7 @@ import sys
 import os
 import glob
 import subprocess
+from natsort import natsorted
 
 def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
 
@@ -107,7 +108,7 @@ def export(args):
                         varfile_still_needed = True
                 if varfile_still_needed:
                     needed_varfiles.append(varfile)
-            varfiles = needed_varfiles
+            varfiles = natsorted(needed_varfiles)
             if args.verbose:
                 if len(varfiles) > 0:
                     print(f"New or incompletely exported varfile(s) found: {', '.join(varfiles)}", flush=True)
@@ -133,7 +134,7 @@ def export(args):
                         pvarfile_still_needed = True
                 if pvarfile_still_needed:
                     needed_pvarfiles.append(pvarfile)
-            pvarfiles = needed_pvarfiles
+            pvarfiles = natsorted(needed_pvarfiles)
             if args.verbose:
                 if len(pvarfiles) > 0:
                     print(f"New or incompletely exported pvarfile(s) found: {', '.join(pvarfiles)}", flush=True)
