@@ -6,7 +6,7 @@
 # Written by
 # Thomas Hartlep
 # Bay Area Environmental Research Institute
-# November/December 2024; August/September 2025
+# November/December 2024; August/September/December 2025
 ####################################################
 
 import time, gc
@@ -17,6 +17,7 @@ import glob
 import subprocess
 from natsort import natsorted
 
+# Export PENCIL snaphot to numpy 
 def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
 
     try:
@@ -26,33 +27,55 @@ def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
         exit()
 
     # We let pencil python code collect data (usually requires more memory)
-    if not pvar:
-        d = pc.read_var(varfile=varfile, datadir=data_directory+'data', trimall=True, quiet=(not verbose))
+    try:
+        if not pvar:
+            d = pc.read_var(varfile=varfile, datadir=data_directory+'data', trimall=True, quiet=(not verbose))
+        else:
+            d = pc.read_pvar(varfile=varfile, datadir=data_directory+'data', verbose=verbose)
+    except:
+        print(f'Error encounter while collecting data using PENCIL python scripts.')
+        return 1
     else:
-        d = pc.read_pvar(varfile=varfile, datadir=data_directory+'data', verbose=verbose)
+        # Get variables and write out to file
+        if len(varnames) == 0:
+            print(f'Variables stored in snapshot file {varfile}: '+', '.join([att for att in dir(d) if not callable(getattr(d,att)) and att[:2]!='__']))
 
-    # Get variables and write out to file
-    if len(varnames) == 0:
-        print(f'Variables stored in snapshot file {varfile}: '+', '.join([att for att in dir(d) if not callable(getattr(d,att)) and att[:2]!='__']))
+        for varname in varnames:
+            try:
+                data = getattr(d, varname)
+            except AttributeError:
+                print(f'Unknown varname {varname} !')
+            else:                    
+                # Write entire array to file
+                if len(np.shape(data)) == 0:
+                    numpy_array_filename = 'exported__'+varname+'__'+varfile+'.txt'
+                    np.savetxt(numpy_array_filename, [data])
+                else:
+                    numpy_array_filename = 'exported__'+varname+'__'+varfile+'.npy'
+                    np.save(numpy_array_filename, data)
 
-    for varname in varnames:
-        try:
-            data = getattr(d, varname)
-        except AttributeError:
-            print(f'Unknown varname {varname} !')
-        else:                    
-            # Write entire array to file
-            if len(np.shape(data)) == 0:
-                numpy_array_filename = 'exported__'+varname+'__'+varfile+'.txt'
-                np.savetxt(numpy_array_filename, [data])
-            else:
-                numpy_array_filename = 'exported__'+varname+'__'+varfile+'.npy'
-                np.save(numpy_array_filename, data)
+        return 0
 
 varname_list = ['dx', 'dy', 'dz', 'np', 'rho', 'rhop', 't', 'ux', 'uy', 'uz', 'x', 'y', 'z']
 pvarname_list = ['ipars', 'ivpx', 'ivpy', 'ivpz', 'ixp', 'iyp', 'izp', 'vpx', 'vpy', 'vpz', 'xp', 'yp', 'zp']
 default_auto_wait = 10
 
+# Delete original snapshot
+def delete_original_snapshot(varfile=None, data_directory=None, verbose=False):
+
+    if varfile is not None and data_directory is not None:
+        proc_dirs = glob.glob(os.path.join(data_directory, 'proc*'))
+        for proc_dir in proc_dirs:
+            varfile_proc = os.path.join(proc_dir, varfile)
+            if os.path.exists(varfile_proc):
+                os.remove(varfile_proc)
+        if verbose:
+            print(f'Orginal snapshot {varfile} in {data_directory} deleted!')
+    else:
+        if verbose:
+            print(f'Varfile and data_directory needed in order to delete original snapshot')
+
+# Main CLI
 def main():
 
     # Parse command line argument
@@ -68,6 +91,7 @@ def main():
     parser.add_argument('--wait_time', help = 'Wait time when running in daemon mode (default: '+str(default_auto_wait)+')', default = default_auto_wait, type=int)
     parser.add_argument('--analysis', help='Analysis command to be run after export (default: None)', default = None)
     parser.add_argument('--analysis_dir', help='Analysis directory (default: .)', default = '.')
+    parser.add_argument('--delete_originals', action = 'store_true', help = 'Delete original snapshot(s) after successful data collation (default: False)', default = False)
 
     args = parser.parse_args()
 
@@ -142,12 +166,16 @@ def export(args):
         # Export variables
         if not skip_varfiles:
             for varfile in varfiles:
-                export_pencil(varnames=args.varnames, varfile=varfile, data_directory=args.directory+'/', pvar=False, verbose=args.verbose)
+                error_code = export_pencil(varnames=args.varnames, varfile=varfile, data_directory=args.directory+'/', pvar=False, verbose=args.verbose)
+                if error_code == 0 and args.delete_originals:
+                    delete_original_snapshot(varfile=varfile, data_directory=args.directory+'/', verbose=args.verbose)
 
         # Export particle variables
         if not skip_pvarfiles:
             for pvarfile in pvarfiles:
-                export_pencil(varnames=args.pvarnames, varfile=pvarfile, data_directory=args.directory+'/', pvar=True, verbose=args.verbose)
+                error_code = export_pencil(varnames=args.pvarnames, varfile=pvarfile, data_directory=args.directory+'/', pvar=True, verbose=args.verbose)
+                if error_code == 0 and args.delete_originals:
+                    delete_original_snapshot(varfile=varfile, data_directory=args.directory+'/', verbose=args.verbose)
 
         # Run analysis code if provided
         if args.analysis is not None:

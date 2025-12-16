@@ -5,7 +5,7 @@
 # Written by
 # Thomas Hartlep
 # Bay Area Environmental Research Institute
-# August/September 2025
+# August/September/December 2025
 ####################################################
 
 import os
@@ -60,7 +60,8 @@ def setup_daemon(args):
         "pvarnames":  ' '.join(args.pvarnames),
         "verbose": args.verbose,
         "analysis": args.analysis if args.analysis is not None else "",
-        "analysis_dir": resolve_path(args.analysis_dir) if args.analysis_dir is not None else resolve_path(args.target)
+        "analysis_dir": resolve_path(args.analysis_dir) if args.analysis_dir is not None else resolve_path(args.target),
+        "delete_originals": args.delete_originals
     }
 
     # Write the configuration data to the JSON file
@@ -170,6 +171,7 @@ def start_daemon(args):
     analysis_dir_string = " --analysis_dir "+config_data["analysis_dir"] if config_data["analysis_dir"] != "" else ""
     verbose_string = " --verbose" if config_data["verbose"] else ""
     daemon_mode_string = " --daemon_mode" if not args.once_only else ""
+    delete_originals_string = " --delete_originals" if config_data["delete_originals"] else ""
 
     # Generate run script
     lines = [
@@ -183,7 +185,7 @@ def start_daemon(args):
         f"#PBS -o {daemon_dir}\n", # direct standard output to deamon config directory
         f"{environment}\n", # shell command to setup environment
         f"cd {target}\n", # change into working directory
-        f"pySnapCollate direct"+source_string+varnames_string+pvarnames_string+verbose_string+analysis_string+analysis_dir_string+daemon_mode_string+" >> pySnapCollate.output \n" # run command
+        f"pySnapCollate direct"+source_string+varnames_string+pvarnames_string+verbose_string+analysis_string+analysis_dir_string+daemon_mode_string+delete_originals_string+" >> pySnapCollate.output \n" # run command
     ]
 
     # Write run script to file
@@ -411,6 +413,7 @@ def main():
     setup_parser.add_argument('--verbose', action = 'store_true', help = 'Verbose output (default: False)', default = False)
     setup_parser.add_argument('--analysis', help='Analysis command to be run in target directory after export (default: None)', default = None)
     setup_parser.add_argument('--analysis_dir', help='Analysis directory (default: same as target directory)', default = None)
+    setup_parser.add_argument('--delete_originals', action = 'store_true', help = 'Delete original snapshot(s) after successful data collation (default: False)', default = False)
 
     # Start command
     start_parser = subparsers.add_parser('start', help='Start a daemon via PBS')
@@ -447,6 +450,7 @@ def main():
     direct_parser.add_argument('--wait_time', help = 'Wait time when running in daemon mode (default: '+str(default_auto_wait)+')', default = default_auto_wait, type=int)
     direct_parser.add_argument('--analysis', help='Analysis command to be run after export (default: None)', default = None)
     direct_parser.add_argument('--analysis_dir', help='Analysis directory (default: .)', default = '.')
+    direct_parser.add_argument('--delete_originals', action = 'store_true', help = 'Delete original snapshot(s) after successful data collation (default: False)', default = False)
 
     args = parser.parse_args()
 
