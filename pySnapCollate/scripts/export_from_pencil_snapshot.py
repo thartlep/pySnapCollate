@@ -17,7 +17,8 @@ import glob
 import subprocess
 from natsort import natsorted
 
-# Export PENCIL snaphot to numpy 
+####################################################
+# Export specific variable from PENCIL snaphshot to numpy 
 def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
 
     try:
@@ -33,7 +34,7 @@ def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
         else:
             d = pc.read_pvar(varfile=varfile, datadir=data_directory+'data', verbose=verbose)
     except:
-        print(f'Error encounter while collecting data using PENCIL python scripts.')
+        print(f'Error encountered while collecting data using PENCIL python scripts.')
         return 1
     else:
         # Get variables and write out to file
@@ -60,6 +61,7 @@ varname_list = ['dx', 'dy', 'dz', 'np', 'rho', 'rhop', 't', 'ux', 'uy', 'uz', 'x
 pvarname_list = ['ipars', 'ivpx', 'ivpy', 'ivpz', 'ixp', 'iyp', 'izp', 'vpx', 'vpy', 'vpz', 'xp', 'yp', 'zp']
 default_auto_wait = 10
 
+####################################################
 # Delete original snapshot
 def delete_original_snapshot(varfile=None, data_directory=None, verbose=False):
 
@@ -75,6 +77,7 @@ def delete_original_snapshot(varfile=None, data_directory=None, verbose=False):
         if verbose:
             print(f'Varfile and data_directory needed in order to delete original snapshot')
 
+####################################################
 # Main CLI
 def main():
 
@@ -97,6 +100,9 @@ def main():
 
     export(args)
 
+
+####################################################
+# Export multiple variables
 def export(args):
 
     # Check arguments are compatible
@@ -199,9 +205,10 @@ def export(args):
         else: # otherwise break out
             break
 
+####################################################
 if __name__ == "__main__":
     main()
 
-##################################################################
-# End of file: export_from_pencil_snapshot.py                    #
-##################################################################
+####################################################
+# End of file: export_from_pencil_snapshot.py      #
+####################################################
