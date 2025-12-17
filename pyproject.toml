@@ -18,8 +18,8 @@ dependencies = [
 ]
 
 [project.scripts]
-pySnapCollate                                                     = "pySnapCollate.scripts.daemon:main"
+pySnapCollate = "pySnapCollate.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["pySnapCollate", "pySnapCollate.scripts"]  # Packages to include
+include = ["pySnapCollate"]  # Packages to include
 exclude = []  # Packages to exclude

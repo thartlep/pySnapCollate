@@ -9,13 +9,18 @@
 # November/December 2024; August/September/December 2025
 ####################################################
 
-import time, gc
-import numpy as np
-import sys
 import os
-import glob
 import subprocess
+import json
+import re
+import glob
+import errno
+import shutil
+import time
+import numpy as np
+import glob
 from natsort import natsorted
+from .utils import remove_enclosing_quotes, resolve_path
 
 config_dir_name = "~/.pySnapCollate"
 default_default_queue = 'normal'
@@ -201,7 +206,6 @@ def export(args):
         # Run analysis code if provided
         if args.analysis is not None:
             try:
-                from pySnapCollate.utilities import remove_enclosing_quotes
                 subprocess.run(remove_enclosing_quotes(args.analysis).split(), 
                                cwd=args.analysis_dir, # Change to analysis directory
                                stdout=open(os.path.join(args.analysis_dir, remove_enclosing_quotes(args.analysis).split()[0]+'.output'),'a'), # Redirect standard output to file

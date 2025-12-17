@@ -5,7 +5,7 @@ Written by Thomas Hartlep, Bay Area Environmental Research Institute, Moffet Fie
 """
 
 # Import
-from pySnapCollate.utilities import generate_full_version_info
+from .utils import generate_full_version_info
 from importlib import metadata
 __version__ = metadata.version('pySnapCollate')
 __full_version_info__ = generate_full_version_info(__version__, __path__[0]+'/..')
