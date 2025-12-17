@@ -58,7 +58,7 @@ def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
         return 0
 
 varname_list = ['dx', 'dy', 'dz', 'np', 'rho', 'rhop', 't', 'ux', 'uy', 'uz', 'x', 'y', 'z']
-pvarname_list = ['ipars', 'ivpx', 'ivpy', 'ivpz', 'ixp', 'iyp', 'izp', 'vpx', 'vpy', 'vpz', 'xp', 'yp', 'zp']
+pvarname_list = ['vpx', 'vpy', 'vpz', 'xp', 'yp', 'zp']
 default_auto_wait = 10
 
 ####################################################

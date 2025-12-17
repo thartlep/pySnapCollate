@@ -26,7 +26,7 @@ default_default_lifetime = 8
 default_default_resources = 'select=1:ncpus=24:mpiprocs=1:ompthreads=48:model=has'
 default_default_environment = 'conda activate pencil'
 varname_list = ['dx', 'dy', 'dz', 'np', 'rho', 'rhop', 't', 'ux', 'uy', 'uz', 'x', 'y', 'z']
-pvarname_list = ['ipars', 'ivpx', 'ivpy', 'ivpz', 'ixp', 'iyp', 'izp', 'vpx', 'vpy', 'vpz', 'xp', 'yp', 'zp']
+pvarname_list = ['vpx', 'vpy', 'vpz', 'xp', 'yp', 'zp']
 default_auto_wait = 1
 
 def setup_daemon(args):
@@ -173,7 +173,7 @@ def start_daemon(args):
     verbose_string = " --verbose" if config_data["verbose"] else ""
     daemon_mode_string = " --daemon_mode" if not args.once_only else ""
     delete_originals_string = " --delete_originals" if config_data["delete_originals"] else ""
-    wait_time_string = f" --wait_time {args.wait_time}"
+    wait_time_string = " --wait_time "+str(config_data["wait_time"])
 
     # Generate run script
     lines = [
