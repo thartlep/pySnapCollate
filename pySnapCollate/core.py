@@ -1,13 +1,6 @@
-#!/usr/bin/env python
-####################################################
-# FILE 'export_from_pencil_snapshot.py'
-# formerly known as 'export_array_from_pencil_snapshot'
-####################################################
-# Written by
-# Thomas Hartlep
-# Bay Area Environmental Research Institute
-# November/December 2024; August/September/December 2025
-####################################################
+"""Core module for pySnapCollate: contains core functions."""
+
+# ==== Imports ============================
 
 import os
 import subprocess
@@ -22,6 +15,8 @@ import glob
 from natsort import natsorted
 from .utils import remove_enclosing_quotes, resolve_path
 
+# ==== Defaults ===========================
+
 config_dir_name = "~/.pySnapCollate"
 default_default_queue = 'normal'
 default_default_lifetime = 8
@@ -31,10 +26,12 @@ varname_list = ['dx', 'dy', 'dz', 'np', 'rho', 'rhop', 't', 'ux', 'uy', 'uz', 'x
 pvarname_list = ['vpx', 'vpy', 'vpz', 'xp', 'yp', 'zp']
 default_auto_wait = 1
 
-####################################################
-# Export specific variable from PENCIL snaphshot to numpy 
-def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
+# =========================================
 
+def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
+    """
+    Export specific variable from PENCIL snaphshot to numpy.
+    """
     try:
         import pencil_old as pc
     except ModuleNotFoundError:
@@ -71,9 +68,12 @@ def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
 
         return 0
 
-####################################################
-# Delete original snapshot
+# =========================================
+
 def delete_original_snapshot(varfile=None, data_directory=None, verbose=False):
+    """
+    Delete original snapshot
+    """
 
     if varfile is not None and data_directory is not None:
         proc_dirs = glob.glob(os.path.join(data_directory, 'data/proc*'))
@@ -97,33 +97,13 @@ def delete_original_snapshot(varfile=None, data_directory=None, verbose=False):
         if verbose:
             print(f'Varfile and data_directory needed in order to delete original snapshot')
 
-####################################################
-# Main CLI
-def main():
 
-    # Parse command line argument
-    import argparse
-    parser = argparse.ArgumentParser(description = 'Export variables from pencil snapshot.')
-    parser.add_argument('--varnames', nargs = "*", help = 'Variable name(s) to export, leave empty to get list of available names if varfile provided (default: '+' '.join(sorted(varname_list))+')', default = varname_list)
-    parser.add_argument('--varfiles', nargs = "*", help = 'Name(s) of snapshot files, automatically find snapshots if none provided (default: None)', default = [])
-    parser.add_argument('--pvarnames', nargs = "*", help = 'Particle variable name(s) to export, leave empty to get list of available names if pvarfile provided (default: '+' '.join(sorted(pvarname_list))+')', default = pvarname_list)
-    parser.add_argument('--pvarfiles', nargs = "*", help = 'Name(s) of particle snapshot files, automatically find snapshots if none provided (default: None)', default = [])
-    parser.add_argument('--directory', help = 'Directory of input data (default: .)', default = '.')
-    parser.add_argument('--verbose', action = 'store_true', help = 'Verbose output (default: False)', default = False)
-    parser.add_argument('--daemon_mode', action = 'store_true', help = 'Daemon mode, automatically restart code after set wait time (default: False)', default = False)
-    parser.add_argument('--wait_time', help = 'Wait time when running in daemon mode (default: '+str(default_auto_wait)+')', default = default_auto_wait, type=int)
-    parser.add_argument('--analysis', help='Analysis command to be run after export (default: None)', default = None)
-    parser.add_argument('--analysis_dir', help='Analysis directory (default: .)', default = '.')
-    parser.add_argument('--delete_originals', action = 'store_true', help = 'Delete original snapshot(s) after successful data collation (default: False)', default = False)
+# =========================================
 
-    args = parser.parse_args()
-
-    export(args)
-
-
-####################################################
-# Export multiple variables
 def export(args):
+    """
+    Export multiple variables
+    """
 
     # Check arguments are compatible
     if args.daemon_mode:
@@ -224,8 +204,13 @@ def export(args):
         else: # otherwise break out
             break
 
-####################################################
+# =========================================
+
 def setup_daemon(args):
+    """
+    Set up daemon configuration
+    """
+
     # Define the path to the daemon configuration directory
     config_dir = os.path.expanduser(config_dir_name)
     os.makedirs(config_dir, exist_ok=True)  # Create the directory if it doesn't exist
@@ -269,8 +254,13 @@ def setup_daemon(args):
     except Exception as e:
         print(f"An error occurred while setting up the daemon: {e}")
 
-####################################################
+# =========================================
+
 def inspect_daemon(args):
+    """
+    Inspect daemon configuration and status.
+    """
+
     config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
     daemon_dir = os.path.join(config_dir, args.name) # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json")
@@ -307,8 +297,13 @@ def inspect_daemon(args):
             # Delete active daemon file
             os.remove(active_file)
 
-####################################################
+# =========================================
+
 def start_daemon(args):
+    """
+    Start daemon by submitting it to the run queue.
+    """
+
     config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
     daemon_dir = os.path.join(config_dir, args.name) # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json") # Configuration file for the specific daemon
@@ -412,8 +407,13 @@ def start_daemon(args):
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while starting the daemon: {e.stderr}")
 
-####################################################
+# =========================================
+
 def stop_daemon(args):
+    """
+    Stop daemon by deleting it from the run queue.
+    """
+
     config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
     daemon_dir = os.path.join(config_dir, args.name) # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json") # Configuration file for the specific daemon
@@ -462,8 +462,13 @@ def stop_daemon(args):
         print(f"Daemon '{args.name}' is not submitted/running.")
 
 
-####################################################
+# =========================================
+
 def list_daemons():
+    """
+    List existing daemon configurations.
+    """
+
     # Define the path to the daemon configuration directory
     config_dir = os.path.expanduser("~/.pySnapCollate")
     
@@ -486,8 +491,13 @@ def list_daemons():
     except Exception as e:
         print(f"An error occurred while listing daemons: {e}")
 
-####################################################
+# =========================================
+
 def remove_daemon(args):
+    """
+    Remove daemon by deleting its configuration files.
+    """
+
     config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
     daemon_dir = os.path.join(config_dir, args.name) # Directory for the specific daemon
     config_path = os.path.join(daemon_dir, "config.json") # Configuration file for the specific daemon
@@ -533,8 +543,13 @@ def remove_daemon(args):
                 # Handle other potential OS-related errors
                 print(f"Unexpected OS error: {e}")
 
-####################################################
+# =========================================
+
 def read_defaults():
+    """
+    Read default settings for daemon configuration.
+    """
+
     config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
     defaults_path = os.path.join(config_dir, "defaults.json") # Defaults JSON file
     
@@ -552,8 +567,13 @@ def read_defaults():
 
     return defaults
 
-####################################################
+# =========================================
+
 def set_defaults(args):
+    """
+    Set default daemon configuration.
+    """
+
     config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
     os.makedirs(config_dir, exist_ok=True)  # Create the directory if it doesn't exist
     defaults_path = os.path.join(config_dir, "defaults.json") # Defaults JSON file
@@ -572,11 +592,3 @@ def set_defaults(args):
             json.dump(defaults, defaults_file, indent=4)
     except Exception as e:
         print(f"An error occurred while setting defaults: {e}")
-
- ####################################################
-if __name__ == "__main__":
-    main()
-
-####################################################
-# End of file: export_from_pencil_snapshot.py      #
-####################################################

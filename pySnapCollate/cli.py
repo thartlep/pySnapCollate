@@ -1,12 +1,6 @@
-#!/usr/bin/env python
-####################################################
-# FILE 'daemon.py'
-####################################################
-# Written by
-# Thomas Hartlep
-# Bay Area Environmental Research Institute
-# August/September/December 2025
-####################################################
+"""CLI module for pySnapCollate: parses arguments and calls core functions."""
+
+# ==== Imports ============================
 
 import argparse
 from . import __full_version_info__
@@ -15,6 +9,8 @@ from .core import read_defaults, set_defaults
 from .core import setup_daemon, start_daemon, stop_daemon, inspect_daemon, remove_daemon, list_daemons
 from .core import default_auto_wait, default_default_environment, default_default_lifetime, default_default_queue, default_default_resources
 from .core import varname_list, pvarname_list
+
+# =========================================
 
 def main():
 
@@ -114,9 +110,7 @@ def main():
     else:
         parser.print_help()
 
+# =========================================
+
 if __name__ == "__main__":
     main()
-
-##################################################################
-# End of file: daemon.py
-##################################################################
