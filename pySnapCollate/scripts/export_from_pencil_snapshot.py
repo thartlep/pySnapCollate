@@ -66,13 +66,23 @@ default_auto_wait = 10
 def delete_original_snapshot(varfile=None, data_directory=None, verbose=False):
 
     if varfile is not None and data_directory is not None:
-        proc_dirs = glob.glob(os.path.join(data_directory, 'proc*'))
+        proc_dirs = glob.glob(os.path.join(data_directory, 'data/proc*'))
+        n_deleted_files = 0
         for proc_dir in proc_dirs:
             varfile_proc = os.path.join(proc_dir, varfile)
-            if os.path.exists(varfile_proc):
+            try:
                 os.remove(varfile_proc)
+            except Exception:
+                pass
+            if not os.path.exists(varfile_proc):
+                n_deleted_files += 1
         if verbose:
-            print(f'Orginal snapshot {varfile} in {data_directory} deleted!')
+            if len(proc_dirs) == n_deleted_files:
+                print(f'Original snapshot {varfile} in {data_directory} successfully deleted!')
+            elif n_deleted_files == 0:
+                print(f'Original snapshot {varfile} in {data_directory} NOT deleted!')
+            else:
+                print(f'Original snapshot {varfile} in {data_directory} PARTIALLY deleted!')
     else:
         if verbose:
             print(f'Varfile and data_directory needed in order to delete original snapshot')
