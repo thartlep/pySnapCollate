@@ -43,7 +43,7 @@ def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
         if not pvar:
             d = pc.read_var(varfile=varfile, datadir=data_directory+'data', trimall=True, quiet=(not verbose))
         else:
-            d = pc.read_pvar(varfile=varfile, datadir=data_directory+'data', verbose=verbose)
+            d = pc.read_pvar(varfile=varfile, datadir=data_directory+'data', verbose=False)
     except:
         print(f'Error encountered while collecting data using PENCIL python scripts.')
         return 1
