@@ -343,7 +343,7 @@ def modify_daemon(args):
 
     # Now modify configuration
     if args.name is not None: config_data["name"] = args.name
-    if args.source is not None: config_data["soure"] = resolve_path(args.source)
+    if args.source is not None: config_data["source"] = resolve_path(args.source)
     if args.target is not None: config_data["target"] = resolve_path(args.target)
     if args.lifetime is not None: config_data["lifetime"] = args.lifetime
     if args.group is not None: config_data["group"] = args.group
