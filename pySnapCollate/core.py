@@ -256,6 +256,78 @@ def setup_daemon(args):
 
 # =========================================
 
+def modify_daemon(args):
+    """
+    Modify daemon configuration.
+    """
+
+    config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
+    daemon_dir = os.path.join(config_dir, args.name) # Directory for the specific daemon
+    config_path = os.path.join(daemon_dir, "config.json") # Deamon configuration file
+    script_path = os.path.join(daemon_dir, "run.csh") # Run script for the specific daemon
+    active_pattern = os.path.join(daemon_dir, "active_job.*") # Acive daemo tag
+
+    # Check if the configuration file exists
+    if not os.path.exists(config_path):
+        print(f"No configuration file found for daemon '{args.name}'.")
+        return
+
+    # Read the configuration data from the JSON file
+    try:
+        with open(config_path, 'r') as config_file:
+            config_data = json.load(config_file)
+    except Exception as e:
+        print(f"An error occurred while loading the daemon configuration: {e}")
+        return
+
+    # Check if queued/running
+    for active_file in glob.glob(active_pattern):
+        # Active daemon file found, let's check if daemon is actually queued or running
+        command = ["qstat", active_file.rsplit('.', 1)[-1]]
+        try:
+            result = subprocess.run(command, check=True, capture_output=True, text=True)
+            is_in_queue = True
+            print(f"Daemon '{args.name}' is queued/running. Cannot modify configuration.")
+        except subprocess.CalledProcessError as e:
+            # Delete active daemon file because daemon is no longer queued/running
+            os.remove(active_file)
+        else:
+            return
+
+    # Remove run script if existing, it will get recreated when daemon is started again
+    try:
+        if os.path.exists(script_path):
+            os.remove(script_path)
+    except Exception as e:
+        print(f"An error occurred while removing old daemon run script: {e}")
+
+    # Now modify configuration
+    if args.name is not None: config_data["name"] = args.name
+    if args.source is not None: config_data["soure"] = resolve_path(args.source)
+    if args.target is not None: config_data["target"] = resolve_path(args.target)
+    if args.lifetime is not None: config_data["lifetime"] = args.lifetime
+    if args.group is not None: config_data["group"] = args.group
+    if args.resources is not None: config_data["resources"] = args.resources
+    if args.environment is not None: config_data["environment"] = args.environment
+    if args.queue is not None: config_data["queue"] = args.queue
+    if args.varnames is not None: config_data["varnames"] = ' '.join(args.varnames)
+    if args.pvarnames is not None: config_data["pvarnames"] = ' '.join(args.pvarnames)
+    if args.verbose is not None: config_data["verbose"] = args.verbose
+    if args.analysis is not None: config_data["analysis"] = args.analysis if args.analysis is not None else ""
+    if args.analysis_dir is not None: config_data["analysis_dir"] = resolve_path(args.analysis_dir) if args.analysis_dir is not None else resolve_path(args.target)
+    if args.delete_originals is not None: config_data["delete_originals"] = args.delete_originals
+    if args.wait_time is not None: config_data["wait_time"] = args.wait_time
+
+    # Write the configuration data to the JSON file
+    try:
+        with open(config_path, 'w') as config_file:
+            json.dump(config_data, config_file, indent=4)
+        print(f"Daemon '{args.name}' has been modified successfully.")
+    except Exception as e:
+        print(f"An error occurred while writing daemon configuration: {e}")
+
+# =========================================
+
 def inspect_daemon(args):
     """
     Inspect daemon configuration and status.
@@ -263,7 +335,7 @@ def inspect_daemon(args):
 
     config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
     daemon_dir = os.path.join(config_dir, args.name) # Directory for the specific daemon
-    config_path = os.path.join(daemon_dir, "config.json")
+    config_path = os.path.join(daemon_dir, "config.json") # Deamon configuration file
     active_pattern = os.path.join(daemon_dir, "active_job.*") # Acive daemo tag
 
     # Check if the configuration file exists

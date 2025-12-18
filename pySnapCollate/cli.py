@@ -6,7 +6,7 @@ import argparse
 from . import __full_version_info__
 from .core import export as run_direct
 from .core import read_defaults, set_defaults
-from .core import setup_daemon, start_daemon, stop_daemon, inspect_daemon, remove_daemon, list_daemons
+from .core import setup_daemon, modify_daemon, start_daemon, stop_daemon, inspect_daemon, remove_daemon, list_daemons
 from .core import default_auto_wait, default_default_environment, default_default_lifetime, default_default_queue, default_default_resources
 from .core import varname_list, pvarname_list
 
@@ -52,6 +52,28 @@ def main():
     setup_parser.add_argument('--delete_originals', action = 'store_true', help = 'Delete original snapshot(s) after successful data collation (default: False)', default = False)
     setup_parser.add_argument('--wait_time', help = 'Wait time for next snapshot discovery (default: '+str(default_auto_wait)+')', default = default_auto_wait, type=int)
     
+     # Modify command
+    modify_parser = subparsers.add_parser('modify', help='Modify daemon a daemon configuration')
+    modify_parser.add_argument('name', help='Name of the daemon')
+    modify_parser.add_argument('--source', help='Source directory (default: no change)', default=None)
+    modify_parser.add_argument('--target', help='Target directory (default: no change)', default=None)
+    modify_parser.add_argument('--group', help='Group ID (default: no change)', default = None)
+    modify_parser.add_argument('--resources', help='Resource string (default: no change)', default = None)
+    modify_parser.add_argument('--environment', help='Command line for setting up environment (default: no change)', default=None)
+    modify_parser.add_argument('--lifetime', help='Lifetime in hours (default: no change)', default=None, type = int)
+    modify_parser.add_argument('--queue', help='Name of scheduler queue (default: no change)', default=None)
+    modify_parser.add_argument('--varnames', nargs = "*", help='Name(s) of variable(s) to export (default: no change)', default=None)
+    modify_parser.add_argument('--pvarnames', nargs = "*", help='Name(s) of particle variable(s) name(s) to export (default: no change)', default=None)
+    modify_parser.add_argument('--force', action = 'store_true', help = 'Forced override of existing daemon configuration (default: no change)', default=None)
+    modify_parser.add_argument('--verbose', action = 'store_true', help = 'Verbose output(default: no change)', default=None)
+    modify_parser.add_argument('--analysis', help='Analysis command to be run in target directory after export (default: no change)', default=None)
+    modify_parser.add_argument('--analysis_dir', help='Analysis directory (default: same as target directory)', default = None)
+    group = modify_parser.add_mutually_exclusive_group()
+    group.add_argument('--delete_originals', dest='delete_originals', action='store_true', help = 'Delete original snapshot(s) after successful data collation (default: no change)')
+    group.add_argument('--no_delete_originals', dest='delete_originals', action='store_false', help = 'Do not delete original snapshot(s) after successful data collation (default: no change)')
+    modify_parser.set_defaults(delete_originals=None)
+    modify_parser.add_argument('--wait_time', help = 'Wait time for next snapshot discovery (default: no change)', default=None, type=int)
+ 
     # Start command
     start_parser = subparsers.add_parser('start', help='Start a daemon via PBS')
     start_parser.add_argument('name', help='Name of the daemon')
@@ -95,6 +117,8 @@ def main():
         set_defaults(args)
     elif args.command == 'setup':
         setup_daemon(args)
+    elif args.command == 'modify':
+        modify_daemon(args)
     elif args.command == 'start':
         start_daemon(args)
     elif args.command == 'stop':
