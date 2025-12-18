@@ -6,7 +6,7 @@ import argparse
 from . import __full_version_info__
 from .core import export as run_direct
 from .core import read_defaults, set_defaults
-from .core import setup_daemon, modify_daemon, start_daemon, stop_daemon, inspect_daemon, remove_daemon, list_daemons
+from .core import setup_daemon, copy_daemon, modify_daemon, start_daemon, stop_daemon, inspect_daemon, remove_daemon, list_daemons
 from .core import default_auto_wait, default_default_environment, default_default_lifetime, default_default_queue, default_default_resources
 from .core import varname_list, pvarname_list
 
@@ -53,7 +53,7 @@ def main():
     setup_parser.add_argument('--wait_time', help = 'Wait time for next snapshot discovery (default: '+str(default_auto_wait)+')', default = default_auto_wait, type=int)
     
      # Modify command
-    modify_parser = subparsers.add_parser('modify', help='Modify daemon a daemon configuration')
+    modify_parser = subparsers.add_parser('modify', help='Modify a daemon configuration')
     modify_parser.add_argument('name', help='Name of the daemon')
     modify_parser.add_argument('--source', help='Source directory (default: no change)', default=None)
     modify_parser.add_argument('--target', help='Target directory (default: no change)', default=None)
@@ -73,6 +73,11 @@ def main():
     group.add_argument('--no_delete_originals', dest='delete_originals', action='store_false', help = 'Do not delete original snapshot(s) after successful data collation (default: no change)')
     modify_parser.set_defaults(delete_originals=None)
     modify_parser.add_argument('--wait_time', help = 'Wait time for next snapshot discovery (default: no change)', default=None, type=int)
+ 
+     # Copy command
+    copy_parser = subparsers.add_parser('copy', help='Copy a daemon configuration')
+    copy_parser.add_argument('src_name', help='Name of the source daemon')
+    copy_parser.add_argument('dest_name', help='Name of the destination daemon')
  
     # Start command
     start_parser = subparsers.add_parser('start', help='Start a daemon via PBS')
@@ -117,6 +122,8 @@ def main():
         set_defaults(args)
     elif args.command == 'setup':
         setup_daemon(args)
+    elif args.command == 'copy':
+        copy_daemon(args)
     elif args.command == 'modify':
         modify_daemon(args)
     elif args.command == 'start':

@@ -256,6 +256,46 @@ def setup_daemon(args):
 
 # =========================================
 
+def copy_daemon(args):
+    """
+    Cpoy daemon configuration
+    """
+
+    config_dir = os.path.expanduser(config_dir_name) # Daemon configuration directory
+    src_daemon_dir = os.path.join(config_dir, args.src_name) # Directory for the source daemon
+    src_config_path = os.path.join(src_daemon_dir, "config.json") # Source deamon configuration file
+    des_daemon_dir = os.path.join(config_dir, args.dest_name) # Directory for the destination daemon
+    des_config_path = os.path.join(des_daemon_dir, "config.json") # Destination deamon configuration file
+
+    # Return early if destination daemon already exists
+    if os.path.exists(des_config_path):
+        print(f"Destination daemon {args.dest_name} already exists. Abort!")
+        return
+
+    # Read source configuration data from the JSON file
+    try:
+        with open(src_config_path, 'r') as config_file:
+            config_data = json.load(config_file)
+    except Exception as e:
+        print(f"An error occurred while loading source daemon configuration: {e}")
+        return
+
+    # Create destination daemon configuration directory
+    os.makedirs(des_daemon_dir, exist_ok=True) 
+
+    # Modify configuration name
+    config_data["name"] = args.dest_name
+
+    # Write destination configuration data to the JSON file
+    try:
+        with open(des_config_path, 'w') as config_file:
+            json.dump(config_data, config_file, indent=4)
+        print(f"Daemon '{args.dest_name}' has been created successfully.")
+    except Exception as e:
+        print(f"An error occurred while writing daemon configuration: {e}")
+
+# =========================================
+
 def modify_daemon(args):
     """
     Modify daemon configuration.
