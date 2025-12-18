@@ -181,7 +181,7 @@ def export(args):
             for pvarfile in pvarfiles:
                 error_code = export_pencil(varnames=args.pvarnames, varfile=pvarfile, data_directory=args.directory+'/', pvar=True, verbose=args.verbose)
                 if error_code == 0 and args.delete_originals:
-                    delete_original_snapshot(varfile=varfile, data_directory=args.directory+'/', verbose=args.verbose)
+                    delete_original_snapshot(varfile=pvarfile, data_directory=args.directory+'/', verbose=args.verbose)
 
         # Run analysis code if provided
         if args.analysis is not None:
