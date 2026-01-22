@@ -14,6 +14,7 @@ import numpy as np
 import glob
 from natsort import natsorted
 from .utils import remove_enclosing_quotes, resolve_path
+from concurrent.futures import ProcessPoolExecutor
 
 # ==== Defaults ===========================
 
@@ -139,8 +140,8 @@ def export(args):
                 if varfile_still_needed:
                     needed_varfiles.append(varfile)
             varfiles = natsorted(needed_varfiles)
-            if args.one_at_a_time and varfiles:
-                varfiles = [varfiles[0]] # Use only first new discovered file
+            if args.one_batch_at_a_time:
+                varfiles = varfiles[:args.batch_size] # Use only batch size number of newly discovered file(s)
             if args.verbose:
                 if len(varfiles) > 0:
                     print(f"New or incompletely exported varfile(s) found: {', '.join(varfiles)}", flush=True)
@@ -167,25 +168,29 @@ def export(args):
                 if pvarfile_still_needed:
                     needed_pvarfiles.append(pvarfile)
             pvarfiles = natsorted(needed_pvarfiles)
-            if args.one_at_a_time and pvarfiles:
-                pvarfiles = [pvarfiles[0]] # Use only first new discovered file
+            if args.one_batch_at_a_time:
+                pvarfiles = pvarfiles[:args.batch_size] # Use only batch size number of newly discovered file(s)
             if args.verbose:
                 if len(pvarfiles) > 0:
                     print(f"New or incompletely exported pvarfile(s) found: {', '.join(pvarfiles)}", flush=True)
 
         # Export variables
         if not skip_varfiles:
-            for varfile in varfiles:
-                error_code = export_pencil(varnames=args.varnames, varfile=varfile, data_directory=args.directory+'/', pvar=False, verbose=args.verbose)
-                if error_code == 0 and args.delete_originals:
-                    delete_original_snapshot(varfile=varfile, data_directory=args.directory+'/', verbose=args.verbose)
+            with ProcessPoolExecutor(max_workers=args.batch_size) as pool:
+                error_codes = pool.map(export_pencil, [args.varnames]*len(varfiles), varfiles, [args.directory+'/']*len(varfiles), [False]*len(varfiles), [False]*len(varfiles))
+            if args.delete_originals:
+                for error_code, varfile in zip(error_codes, varfiles):
+                    if error_code == 0:
+                        delete_original_snapshot(varfile=varfile, data_directory=args.directory+'/', verbose=args.verbose)
 
         # Export particle variables
         if not skip_pvarfiles:
-            for pvarfile in pvarfiles:
-                error_code = export_pencil(varnames=args.pvarnames, varfile=pvarfile, data_directory=args.directory+'/', pvar=True, verbose=args.verbose)
-                if error_code == 0 and args.delete_originals:
-                    delete_original_snapshot(varfile=pvarfile, data_directory=args.directory+'/', verbose=args.verbose)
+            with ProcessPoolExecutor(max_workers=args.batch_size) as pool:
+                error_codes = pool.map(export_pencil, [args.pvarnames]*len(pvarfiles), pvarfiles, [args.directory+'/']*len(pvarfiles), [True]*len(pvarfiles), [False]*len(pvarfiles))
+            if args.delete_originals:
+                for error_code, pvarfile in zip(error_codes, pvarfiles):
+                    if error_code == 0:
+                        delete_original_snapshot(varfile=pvarfile, data_directory=args.directory+'/', verbose=args.verbose)
 
         # Run analysis code if provided
         if args.analysis is not None:
@@ -248,7 +253,8 @@ def setup_daemon(args):
         "analysis_dir": resolve_path(args.analysis_dir) if args.analysis_dir is not None else resolve_path(args.target),
         "delete_originals": args.delete_originals,
         "wait_time": args.wait_time,
-        "one_at_a_time": args.one_at_a_time
+        "one_batch_at_a_time": args.one_batch_at_a_time,
+        "batch_size": args.batch_size
     }
 
     # Write the configuration data to the JSON file
@@ -362,7 +368,8 @@ def modify_daemon(args):
     if args.analysis_dir is not None: config_data["analysis_dir"] = resolve_path(args.analysis_dir) if args.analysis_dir is not None else resolve_path(args.target)
     if args.delete_originals is not None: config_data["delete_originals"] = args.delete_originals
     if args.wait_time is not None: config_data["wait_time"] = args.wait_time
-    if args.one_at_a_time is not None: config_data["one_at_a_time"] = args.one_at_a_time
+    if args.one_batch_at_a_time is not None: config_data["one_batch_at_a_time"] = args.one_batch_at_a_time
+    if args.batch_size is not None: config_data["batch_size"] = args.batch_size
 
     # Write the configuration data to the JSON file
     try:
@@ -483,7 +490,8 @@ def start_daemon(args):
     daemon_mode_string = " --daemon_mode" if not args.once_only else ""
     delete_originals_string = " --delete_originals" if config_data["delete_originals"] else ""
     wait_time_string = " --wait_time "+str(config_data["wait_time"])
-    one_at_a_time_string = " --one_at_a_time" if config_data["one_at_a_time"] else ""
+    one_batch_at_a_time_string = " --one_batch_at_a_time" if config_data["one_batch_at_a_time"] else ""
+    batch_size_string = " --batch_size "+str(config_data["batch_size"])
 
     # Generate run script
     lines = [
@@ -497,7 +505,7 @@ def start_daemon(args):
         f"#PBS -o {daemon_dir}\n", # direct standard output to deamon config directory
         f"{environment}\n", # shell command to setup environment
         f"cd {target}\n", # change into working directory
-        f"pySnapCollate direct"+source_string+varnames_string+pvarnames_string+verbose_string+analysis_string+analysis_dir_string+daemon_mode_string+delete_originals_string+wait_time_string+one_at_a_time_string+" >> pySnapCollate.output \n" # run command
+        f"pySnapCollate direct"+source_string+varnames_string+pvarnames_string+verbose_string+analysis_string+analysis_dir_string+daemon_mode_string+delete_originals_string+wait_time_string+one_batch_at_a_time_string+batch_size_string+" >> pySnapCollate.output \n" # run command
     ]
 
     # Write run script to file
