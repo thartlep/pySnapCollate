@@ -29,12 +29,15 @@ default_auto_wait = 1
 
 # =========================================
 
-def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
+def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False, pencil_old=False):
     """
     Export specific variable from PENCIL snaphshot to numpy.
     """
     try:
-        import pencil_old as pc
+        if pencil_old:
+            import pencil_old as pc
+        else:
+            import pencil as pc
     except ModuleNotFoundError:
         print('Pencil code not found. Cannot import data.')
         exit()
@@ -42,9 +45,15 @@ def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
     # We let pencil python code collect data (usually requires more memory)
     try:
         if not pvar:
-            d = pc.read_var(varfile=varfile, datadir=data_directory+'data', trimall=True, quiet=(not verbose))
+            if pencil_old:
+                d = pc.read_var(varfile=varfile, datadir=data_directory+'data', trimall=True, quiet=True)
+            else:
+                d = pc.read.varfile.var(varfile=varfile, datadir=data_directory+'data', trimall=True, quiet=True)
         else:
-            d = pc.read_pvar(varfile=varfile, datadir=data_directory+'data', verbose=False)
+            if pencil_old: 
+                d = pc.read_pvar(varfile=varfile, datadir=data_directory+'data', verbose=False)
+            else:
+                d = pc.read.pvarfile.pvar(pvarfile=varfile, datadir=data_directory+'data', quiet=True)
     except:
         print(f'Error encountered while collecting data using PENCIL python scripts.')
         return 1
