@@ -52,7 +52,7 @@ def main():
     setup_parser.add_argument('--delete_originals', action = 'store_true', help = 'Delete original snapshot(s) after successful data collation (default: False)', default = False)
     setup_parser.add_argument('--wait_time', help = 'Wait time for next snapshot discovery (default: '+str(default_auto_wait)+')', default = default_auto_wait, type=int)
     setup_parser.add_argument('--one_batch_at_a_time', action = 'store_true', help = 'Process one batch of snapshots at a time (export + analysis), otherwise export all available data first (default: False)', default = False)
-    setup_daemon.add_argument('--batch_size', help='Batch size, number of snapshots exported in parallel (default: 1)', default=1, type = int)
+    setup_parser.add_argument('--batch_size', help='Batch size, number of snapshots exported in parallel (default: 1)', default=1, type = int)
     
      # Modify command
     modify_parser = subparsers.add_parser('modify', help='Modify a daemon configuration')
