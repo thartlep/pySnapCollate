@@ -51,6 +51,7 @@ def main():
     setup_parser.add_argument('--analysis_dir', help='Analysis directory (default: same as target directory)', default = None)
     setup_parser.add_argument('--delete_originals', action = 'store_true', help = 'Delete original snapshot(s) after successful data collation (default: False)', default = False)
     setup_parser.add_argument('--wait_time', help = 'Wait time for next snapshot discovery (default: '+str(default_auto_wait)+')', default = default_auto_wait, type=int)
+    setup_parser.add_argument('--one_at_a_time', action = 'store_true', help = 'Process one snapshot at a time (export + analysis), otherwise export all available data first (default: False)', default = False)
     
      # Modify command
     modify_parser = subparsers.add_parser('modify', help='Modify a daemon configuration')
@@ -73,6 +74,9 @@ def main():
     group.add_argument('--no_delete_originals', dest='delete_originals', action='store_false', help = 'Do not delete original snapshot(s) after successful data collation (default: no change)')
     modify_parser.set_defaults(delete_originals=None)
     modify_parser.add_argument('--wait_time', help = 'Wait time for next snapshot discovery (default: no change)', default=None, type=int)
+    group2 = modify_parser.add_mutually_exclusive_group()
+    group2.add_argument('--one_at_a_time', dest='one_at_a_time', action='store_true', help = 'Process one snapshot at a time (export + analysis), otherwise export all available data first (default: no change)')
+    group2.add_argument('--no_one_at_a_time', dest='one_at_a_time', action='store_false', help = 'Export all available data first before calling analysis, if applicable (default: no change)')
  
      # Copy command
     copy_parser = subparsers.add_parser('copy', help='Copy a daemon configuration')
@@ -115,6 +119,7 @@ def main():
     direct_parser.add_argument('--analysis', help='Analysis command to be run after export (default: None)', default = None)
     direct_parser.add_argument('--analysis_dir', help='Analysis directory (default: .)', default = '.')
     direct_parser.add_argument('--delete_originals', action = 'store_true', help = 'Delete original snapshot(s) after successful data collation (default: False)', default = False)
+    direct_parser.add_argument('--one_at_a_time', action = 'store_true', help = 'Process one snapshot at a time (export + analysis), otherwise export all available data first (default: False)', default = False)
 
     args = parser.parse_args()
 

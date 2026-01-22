@@ -139,6 +139,8 @@ def export(args):
                 if varfile_still_needed:
                     needed_varfiles.append(varfile)
             varfiles = natsorted(needed_varfiles)
+            if args.one_at_a_time and varfiles:
+                varfiles = [varfiles[0]] # Use only first new discovered file
             if args.verbose:
                 if len(varfiles) > 0:
                     print(f"New or incompletely exported varfile(s) found: {', '.join(varfiles)}", flush=True)
@@ -165,6 +167,8 @@ def export(args):
                 if pvarfile_still_needed:
                     needed_pvarfiles.append(pvarfile)
             pvarfiles = natsorted(needed_pvarfiles)
+            if args.one_at_a_time and pvarfiles:
+                pvarfiles = [pvarfiles[0]] # Use only first new discovered file
             if args.verbose:
                 if len(pvarfiles) > 0:
                     print(f"New or incompletely exported pvarfile(s) found: {', '.join(pvarfiles)}", flush=True)
@@ -243,7 +247,8 @@ def setup_daemon(args):
         "analysis": args.analysis if args.analysis is not None else "",
         "analysis_dir": resolve_path(args.analysis_dir) if args.analysis_dir is not None else resolve_path(args.target),
         "delete_originals": args.delete_originals,
-        "wait_time": args.wait_time
+        "wait_time": args.wait_time,
+        "one_at_a_time": args.one_at_a_time
     }
 
     # Write the configuration data to the JSON file
@@ -357,6 +362,7 @@ def modify_daemon(args):
     if args.analysis_dir is not None: config_data["analysis_dir"] = resolve_path(args.analysis_dir) if args.analysis_dir is not None else resolve_path(args.target)
     if args.delete_originals is not None: config_data["delete_originals"] = args.delete_originals
     if args.wait_time is not None: config_data["wait_time"] = args.wait_time
+    if args.one_at_a_time is not None: config_data["one_at_a_time"] = args.one_at_a_time
 
     # Write the configuration data to the JSON file
     try:
@@ -477,6 +483,7 @@ def start_daemon(args):
     daemon_mode_string = " --daemon_mode" if not args.once_only else ""
     delete_originals_string = " --delete_originals" if config_data["delete_originals"] else ""
     wait_time_string = " --wait_time "+str(config_data["wait_time"])
+    one_at_a_time_string = " --one_at_a_time" if config_data["one_at_a_time"] else ""
 
     # Generate run script
     lines = [
@@ -490,7 +497,7 @@ def start_daemon(args):
         f"#PBS -o {daemon_dir}\n", # direct standard output to deamon config directory
         f"{environment}\n", # shell command to setup environment
         f"cd {target}\n", # change into working directory
-        f"pySnapCollate direct"+source_string+varnames_string+pvarnames_string+verbose_string+analysis_string+analysis_dir_string+daemon_mode_string+delete_originals_string+wait_time_string+" >> pySnapCollate.output \n" # run command
+        f"pySnapCollate direct"+source_string+varnames_string+pvarnames_string+verbose_string+analysis_string+analysis_dir_string+daemon_mode_string+delete_originals_string+wait_time_string+one_at_a_time_string+" >> pySnapCollate.output \n" # run command
     ]
 
     # Write run script to file
