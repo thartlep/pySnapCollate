@@ -67,7 +67,6 @@ def main():
     modify_parser.add_argument('--varnames', nargs = "*", help='Name(s) of variable(s) to export (default: no change)', default=None)
     modify_parser.add_argument('--pvarnames', nargs = "*", help='Name(s) of particle variable(s) name(s) to export (default: no change)', default=None)
     modify_parser.add_argument('--force', action = 'store_true', help = 'Forced override of existing daemon configuration (default: no change)', default=None)
-    modify_parser.add_argument('--verbose', action = 'store_true', help = 'Verbose output(default: no change)', default=None)
     modify_parser.add_argument('--analysis', help='Analysis command to be run in target directory after export (default: no change)', default=None)
     modify_parser.add_argument('--analysis_dir', help='Analysis directory (default: same as target directory)', default = None)
     group = modify_parser.add_mutually_exclusive_group()
@@ -78,7 +77,12 @@ def main():
     group2 = modify_parser.add_mutually_exclusive_group()
     group2.add_argument('--one_batch_at_a_time', dest='one_batch_at_a_time', action='store_true', help = 'Process one batch of snapshots at a time (export + analysis), otherwise export all available data first (default: no change)')
     group2.add_argument('--no_one_batch_at_a_time', dest='one_batch_at_a_time', action='store_false', help = 'Export all available data first before calling analysis, if applicable (default: no change)')
+    modify_parser.set_defaults(one_batch_at_a_time=None)
     modify_parser.add_argument('--batch_size', help='Batch size (default: no change)', default=None, type = int)
+    group3 = modify_parser.add_mutually_exclusive_group()
+    group3.add_argument('--verbose', dest='verbose', action='store_true', help = 'Verbose output (default: no change)')
+    group3.add_argument('--no_verbose', dest='verbose', action='store_false', help = 'Turn off verbose output (default: no change)')
+    modify_parser.set_defaults(verbose=None)
  
      # Copy command
     copy_parser = subparsers.add_parser('copy', help='Copy a daemon configuration')
