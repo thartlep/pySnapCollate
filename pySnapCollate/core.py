@@ -29,10 +29,11 @@ default_auto_wait = 1
 
 # =========================================
 
-def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False, pencil_old=False):
+def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False):
     """
     Export specific variable from PENCIL snaphshot to numpy.
     """
+    pencil_old = not pvar
     try:
         if pencil_old:
             import pencil_old as pc
@@ -48,7 +49,7 @@ def export_pencil(varnames, varfile, data_directory, pvar=False, verbose=False, 
             if pencil_old:
                 d = pc.read_var(varfile=varfile, datadir=data_directory+'data', trimall=True, quiet=True)
             else:
-                d = pc.read.varfile.var(varfile=varfile, datadir=data_directory+'data', trimall=True, quiet=True)
+                d = pc.read.varfile.var(var_file=varfile, datadir=data_directory+'data', trimall=True, quiet=True)
         else:
             if pencil_old: 
                 d = pc.read_pvar(varfile=varfile, datadir=data_directory+'data', verbose=False)
